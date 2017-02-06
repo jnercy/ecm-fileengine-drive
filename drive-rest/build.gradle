@@ -1,0 +1,25 @@
+group 'com.nextcont'
+version '1.0-SNAPSHOT'
+
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:1.5.1.RELEASE")
+    }
+}
+
+
+apply plugin: 'idea'
+apply plugin: 'org.springframework.boot'
+
+jar {
+    baseName = 'ecm-fileengine-drive'
+    version =  '0.0.1'
+}
+
+dependencies {
+    compile("org.springframework.boot:spring-boot-starter-web:1.5.1.RELEASE")
+
+}

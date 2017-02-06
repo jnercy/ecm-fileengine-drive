@@ -1,0 +1,20 @@
+group 'com.nextcont'
+version '1.0-SNAPSHOT'
+
+subprojects {
+
+    apply plugin: 'java'
+
+    repositories {
+        mavenCentral()
+    }
+    dependencies{
+        testCompile("junit:junit:4.11")
+        compile("org.springframework.boot:spring-boot-starter-data-mongodb:1.5.1.RELEASE")
+        compile("org.projectlombok:lombok:1.16.12")
+        compile("com.fasterxml.jackson.core:jackson-annotations:2.8.6")
+        compile("com.fasterxml.jackson.core:jackson-core:2.8.6")
+        compile("com.fasterxml.jackson.core:jackson-databind:2.8.6")
+
+    }
+}
