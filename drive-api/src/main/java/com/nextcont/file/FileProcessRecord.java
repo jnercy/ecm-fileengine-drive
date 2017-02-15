@@ -1,8 +1,11 @@
-package bean;
+package com.nextcont.file;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
 import java.util.Date;
 
 /**
@@ -14,13 +17,11 @@ import java.util.Date;
  */
 @Builder
 @Getter
-public class FileProcessRecord {
-
-    private String fileId;
+@AllArgsConstructor
+@NoArgsConstructor
+public class FileProcessRecord implements Serializable {
 
     private String userId;
-
-    private String name;
 
     private boolean ownedByMe;
 
@@ -28,22 +29,12 @@ public class FileProcessRecord {
 
     private boolean modifyByMe;
 
-    private Date createTime;
+    private String modifyByMeTime;
 
-    private boolean folder;
+    private String sharedWithMeTime;
 
-    private Date modifyByMeTime;
-
-    private Date modifiedTime;
-
-    private long quotaBytesUsed;
-
-    private boolean recency;
-
-    private Date sharedWithMeTime;
+    private String viewByMeTime;
 
     private boolean starred;
-
-    private Date viewByMeTime;
 
 }

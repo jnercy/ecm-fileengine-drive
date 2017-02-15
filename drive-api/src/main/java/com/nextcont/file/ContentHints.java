@@ -1,4 +1,4 @@
-package bean;
+package com.nextcont.file;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;

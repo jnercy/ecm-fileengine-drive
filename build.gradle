@@ -1,20 +1,39 @@
-group 'com.nextcont'
-version '1.0-SNAPSHOT'
+
+allprojects {
+    apply plugin: 'java'
+    group 'com.nextcont'
+    version '1.0-SNAPSHOT'
+    sourceCompatibility = 1.8
+    targetCompatibility = 1.8
+}
 
 subprojects {
+    apply plugin: 'maven'
+    apply plugin: "idea"
 
-    apply plugin: 'java'
+    ext {
+        slf4jVersion = '1.7.22'
+        lombokVersion = '1.16.12'
+        jacksonVersion = '2.8.6'
+        logbackVersion = '1.1.9'
+        springbootVersion = '1.5.1.RELEASE'
+        mongoDBDriver = '3.4.2'
+    }
 
     repositories {
+        mavenLocal()
         mavenCentral()
     }
-    dependencies{
-        testCompile("junit:junit:4.11")
-        compile("org.springframework.boot:spring-boot-starter-data-mongodb:1.5.1.RELEASE")
-        compile("org.projectlombok:lombok:1.16.12")
-        compile("com.fasterxml.jackson.core:jackson-annotations:2.8.6")
-        compile("com.fasterxml.jackson.core:jackson-core:2.8.6")
-        compile("com.fasterxml.jackson.core:jackson-databind:2.8.6")
 
+    dependencies{
+        compile(
+                "org.mongodb:mongodb-driver:$mongoDBDriver",
+                "org.projectlombok:lombok:$lombokVersion",
+                "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion",
+                "ch.qos.logback:logback-classic:$logbackVersion",
+                "org.slf4j:jcl-over-slf4j:$slf4jVersion",
+                "commons-lang:commons-lang:2.5",
+                "joda-time:joda-time:2.9.6"
+        )
     }
 }

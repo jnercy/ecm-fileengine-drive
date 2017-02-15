@@ -1,8 +1,9 @@
-package bean;
+package com.nextcont.file;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
-import org.springframework.data.annotation.Transient;
+import lombok.NoArgsConstructor;
 
 /**
  * Created with IntelliJ IDEA.
@@ -13,9 +14,10 @@ import org.springframework.data.annotation.Transient;
  */
 @Builder
 @Getter
-public class FileOwners {
+@AllArgsConstructor
+@NoArgsConstructor
+public class DriveUser {
 
-    @Transient
     private final String kind = "drive#user";
 
     private String displayName;

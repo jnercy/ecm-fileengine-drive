@@ -1,7 +1,9 @@
-package bean;
+package com.nextcont.file;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 /**
  * Created with IntelliJ IDEA.
@@ -12,7 +14,9 @@ import lombok.Getter;
  */
 @Builder
 @Getter
-public class FileCapability {
+@AllArgsConstructor
+@NoArgsConstructor
+public class Capability {
 
     private boolean canEdit;
 
