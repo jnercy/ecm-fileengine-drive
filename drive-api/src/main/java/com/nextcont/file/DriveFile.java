@@ -55,21 +55,21 @@ public class DriveFile implements Serializable{
     private boolean isLock = false;
 
     //解锁时间
-    private Date deblockingTime;
+    private String deblockingTime;
 
     private boolean viewedByMe = false;
 
-    private Date viewedByMeTime;
+    private String viewedByMeTime;
 
-    private Date createdTime;
+    private String createdTime;
 
-    private Date modifiedTime;
+    private String modifiedTime;
 
-    private Date modifiedByMeTime;
+    private String modifiedByMeTime;
 
     private boolean modifiedByMe;
 
-    private Date sharedWithMeTime;
+    private String sharedWithMeTime;
 
     private DriveUser sharingUser;
 

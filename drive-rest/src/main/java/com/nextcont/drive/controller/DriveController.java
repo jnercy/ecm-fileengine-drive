@@ -8,6 +8,8 @@ import com.nextcont.file.*;
 import com.nextcont.file.request.FileListRequest;
 import com.nextcont.file.request.FileLockRequest;
 import com.nextcont.file.request.FileShareRequest;
+import com.nextcont.file.request.PatchMetadataReqeust;
+import com.nextcont.file.response.Error;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
@@ -17,11 +19,8 @@ import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Date;
 import java.util.List;
-import java.util.Optional;
 
-import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Updates.*;
 import static com.nextcont.drive.mongo.MongoField.driveFileExcludeField;
@@ -142,15 +141,11 @@ public class DriveController {
         return fileMetaDataService.queryOne(new Document("id", fileId),excludeUsersRecords).orElse(null);
     }
 
-//    @RequestMapping(value = "/metadata", method = RequestMethod.POST)
-//    public FileMetaData modifyMetadata(@RequestBody FileMetaData metaData) {
-//        log.info("[/{}/metadata][method:{}]", metaData.getId(), "post");
-//        Document newDoc = Document.parse(JsonFormat.toJson(metaData));
-//        fileRecordService
-//                .queryOneFullField(new Document("fileId", metaData.getId()))
-//                .ifPresent(record -> fileMetaDataService.updateOne(eq("id", metaData.getId()), new Document("$set", newDoc)));
-//        return metaData;
-//    }
+    @RequestMapping(value = "/metadata", method = RequestMethod.PATCH)
+    public String modifyMetadata(@RequestBody PatchMetadataReqeust data) {
+        log.info("[/{}/metadata][method:{}]", data.getFileId(), "patch");
+        return JsonFormat.convertJson(Error.generateErrorResponse("Optional function",500)).get();
+    }
 
 
 }

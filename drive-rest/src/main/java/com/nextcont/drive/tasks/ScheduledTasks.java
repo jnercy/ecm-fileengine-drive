@@ -9,6 +9,7 @@ import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Configurable;
 import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -39,7 +40,7 @@ public class ScheduledTasks {
 
     private final String TEST_USERID = "jnercywang@gmail.com";
 
-//    @Scheduled(fixedDelay = 1000 * 5)
+    @Scheduled(fixedDelay = 1000 * 10)
     public void generateDataProcess(){
         List<TransitionUnAggregationData>  queryInfo = fileCallbackService.queryTransitionFileInfo();
 
