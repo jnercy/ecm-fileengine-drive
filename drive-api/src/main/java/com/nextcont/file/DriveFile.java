@@ -52,7 +52,10 @@ public class DriveFile implements Serializable{
     private long thumbnailVersion;
 
     //锁定状态
-    private boolean isLock = false;
+    private boolean locked = false;
+
+    //是否手动解锁
+    private boolean manuallyUnlock = false;
 
     //解锁时间
     private String deblockingTime;

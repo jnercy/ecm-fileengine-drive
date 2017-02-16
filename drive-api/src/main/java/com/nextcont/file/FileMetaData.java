@@ -64,6 +64,9 @@ public class FileMetaData implements Serializable{
     //锁定状态
     private boolean locked = false;
 
+    //是否手动解锁
+    private boolean manuallyUnlock = false;
+
     //解锁时间
     private String deblockingTime;
 

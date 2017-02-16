@@ -9,7 +9,7 @@ import com.nextcont.file.request.FileListRequest;
 import com.nextcont.file.request.FileLockRequest;
 import com.nextcont.file.request.FileShareRequest;
 import com.nextcont.file.request.PatchMetadataReqeust;
-import com.nextcont.file.response.Error;
+import com.nextcont.file.response.ExecutionRecord;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
@@ -81,7 +81,9 @@ public class DriveController {
                     .append("locked", false))
                     .ifPresent(record -> {
                         String unlockTime = new DateTime().plusSeconds(request.getQuantity()).toString("yyyy-MM-dd");
-                        boolean updateResult = fileMetaDataService.updateOne(new Document("id", request.getFileId()), combine(set("locked", true), set("deblockingTime", unlockTime)));
+                        Bson updateLockInfo = request.isManuallyUnlock() ? set("manuallyUnlock", true) : set("deblockingTime", unlockTime);
+
+                        boolean updateResult = fileMetaDataService.updateOne(new Document("id", request.getFileId()), combine(set("locked", true), updateLockInfo));
                         log.info("lock update status:{}", updateResult ? "success" : "failed");
                     });
         } catch (Exception e) {
@@ -95,56 +97,71 @@ public class DriveController {
     //分享逻辑需要梳理
     @RequestMapping(value = "/sharing", method = RequestMethod.POST)
     public String share(@RequestBody FileShareRequest request) {
-        fileMetaDataService.queryOneFullField(new Document("owners.emailAddress", DEMO_USER_ID).append("id", request.getFileId()))
-                .ifPresent(driveFile -> Try.tried(driveFile, file -> {
-                            List<FilePermission> permissions = file.getPermissions();
-                            FilePermission.FilePermissionBuilder builder = FilePermission.builder();
-                            FilePermission permission = builder
-                                    .id(request.getTargetUserId())
-                                    .type("user")
-                                    .emailAdddress(request.getTargetUserId())
-                                    .photoLink("")
-                                    .displayName(request.getTargetUserId())
-                                    .role(request.getRole())
-                                    .build();
-                            permissions.add(permission);
-                            BsonArray permissionArray = new BsonArray();
-                            BsonArray recordsArray = new BsonArray();
-                            permissions.forEach(p -> permissionArray.add(BsonDocument.parse(JsonFormat.toJson(p))));
+        String proccessRecord =
+                fileMetaDataService.queryOneFullField(new Document("owners.emailAddress", DEMO_USER_ID).append("id", request.getFileId()))
+                .map(driveFile -> {
+                            Try<String> proccessTry = Try.tried(driveFile, file -> {
+                                BsonArray permissionArray = new BsonArray();
+                                BsonArray recordsArray = new BsonArray();
+                                List<FilePermission> permissions = file.getPermissions();
+                                FilePermission permission = FilePermission.builder()
+                                        .id(request.getTargetUserId())
+                                        .type("user")
+                                        .emailAdddress(request.getTargetUserId())
+                                        .photoLink("")
+                                        .displayName(request.getTargetUserId())
+                                        .role(request.getRole())
+                                        .build();
+                                permissions.add(permission);
 
-                            List<FileProcessRecord> records = file.getUserRecords();
+                                permissions.forEach(p -> permissionArray.add(BsonDocument.parse(JsonFormat.toJson(p))));
 
-                            FileProcessRecord.FileProcessRecordBuilder recordBuilder = FileProcessRecord.builder();
-                            FileProcessRecord processRecord = recordBuilder
-                                    .userId(request.getTargetUserId())
-                                    .ownedByMe(false)
-                                    .modifyByMe(false)
-                                    .starred(false)
-                                    .build();
-                            records.add(processRecord);
+                                List<FileProcessRecord> records = file.getUserRecords();
 
-                            records.forEach(r -> recordsArray.add(BsonDocument.parse(JsonFormat.toJson(r))));
-                            Bson combineUpdate = combine(set("permissions", permissionArray),set("userRecords",recordsArray), inc("version", 1));
-                            boolean updateResult =
-                                    driveFileService
-                                            .updateOne(new Document("id", request.getFileId()), combineUpdate);
-                            log.info("share update status:{}", updateResult ? "success" : "failed");
+                                FileProcessRecord.FileProcessRecordBuilder recordBuilder = FileProcessRecord.builder();
+                                FileProcessRecord processRecord = recordBuilder
+                                        .userId(request.getTargetUserId())
+                                        .ownedByMe(false)
+                                        .modifyByMe(false)
+                                        .starred(false)
+                                        .build();
+                                records.add(processRecord);
+
+                                records.forEach(r -> recordsArray.add(BsonDocument.parse(JsonFormat.toJson(r))));
+                                Bson combineUpdate = combine(set("permissions", permissionArray), set("userRecords", recordsArray), inc("version", 1));
+                                boolean updateResult =
+                                        driveFileService
+                                                .updateOne(new Document("id", request.getFileId()), combineUpdate);
+                                log.info("share update status:{}", updateResult ? "success" : "failed");
+                                return "sharing success";
+                            });
+                            return proccessTry.isSuccess()  ? getSuccessResponse(proccessTry.getOrThrow()) : getErrorResponse(proccessTry.getOrThrow());
                         }
-                ));
-        return "success";
+                ).orElse(getErrorResponse("file not found or check failed"));
+
+        return proccessRecord;
     }
 
 
     @RequestMapping(value = "/metadata/{fileId}", method = RequestMethod.GET)
     public FileMetaData getMetadata(@PathVariable("fileId") String fileId) {
         log.info("[/{}/metadata][method:{}]", fileId, "get");
-        return fileMetaDataService.queryOne(new Document("id", fileId),excludeUsersRecords).orElse(null);
+        return fileMetaDataService.queryOne(new Document("id", fileId), excludeUsersRecords).orElse(null);
     }
 
     @RequestMapping(value = "/metadata", method = RequestMethod.PATCH)
     public String modifyMetadata(@RequestBody PatchMetadataReqeust data) {
         log.info("[/{}/metadata][method:{}]", data.getFileId(), "patch");
-        return JsonFormat.convertJson(Error.generateErrorResponse("Optional function",500)).get();
+        return getSuccessResponse("Optional function");
+    }
+
+
+    public String getSuccessResponse(String message) {
+        return JsonFormat.convertJson(ExecutionRecord.generateSuccessResponse(message)).orElse(message);
+    }
+
+    public String getErrorResponse(String message) {
+        return JsonFormat.convertJson(ExecutionRecord.generateErrorResponse(message)).orElse(message);
     }
 
 

@@ -43,5 +43,5 @@ public class FileLockRequest implements Serializable{
     /**
      * 是否手动解锁
      */
-    private boolean isPersonallyUnlock;
+    private boolean manuallyUnlock;
 }
