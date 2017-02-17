@@ -11,6 +11,13 @@ subprojects {
     apply plugin: 'maven'
     apply plugin: "idea"
 
+    idea{
+        module{
+            inheritOutputDirs = false
+            outputDir = file("${buildDir}/classes/main")
+        }
+    }
+
     ext {
         slf4jVersion = '1.7.22'
         lombokVersion = '1.16.12'

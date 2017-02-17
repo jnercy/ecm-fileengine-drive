@@ -98,7 +98,7 @@ public class DriveController {
     @RequestMapping(value = "/sharing", method = RequestMethod.POST)
     public String share(@RequestBody FileShareRequest request) {
         String proccessRecord =
-                fileMetaDataService.queryOneFullField(new Document("owners.emailAddress", DEMO_USER_ID).append("id", request.getFileId()))
+                fileMetaDataService.queryOneFullField(new Document("owners.emailAddress", DEMO_USER_ID).append("id", request.getFileId()).append("locked",false))
                 .map(driveFile -> {
                             Try<String> proccessTry = Try.tried(driveFile, file -> {
                                 BsonArray permissionArray = new BsonArray();
@@ -108,7 +108,7 @@ public class DriveController {
                                         .id(request.getTargetUserId())
                                         .type("user")
                                         .emailAdddress(request.getTargetUserId())
-                                        .photoLink("")
+                                        .photoLink("/.jpg")
                                         .displayName(request.getTargetUserId())
                                         .role(request.getRole())
                                         .build();
