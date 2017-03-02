@@ -17,20 +17,6 @@ import java.util.Map;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class PatchMetadataReqeust {
 
-    private String fileId;
-
-    private String uploadType;
-
-    private String addParents;
-
-    private boolean keepRevisionForever;
-
-    private String ocrLanguage;
-
-    private String removeParents;
-
-    private boolean useContentAsIndexableText;
-
     private Map appProperties;
 
     private ContentHints contentHints;
@@ -45,15 +31,20 @@ public class PatchMetadataReqeust {
 
     private String name;
 
+    private String originalFilename;
+
     private Map properties;
 
-    private boolean starred;
+    private String starred;
 
-    private boolean trashed;
+    private String trashed;
 
     private String viewedByMeTime;
 
-    private boolean viewersCanCopyContent;
+    private String viewersCanCopyContent;
 
-    private boolean writersCanShare;
+    private String writersCanShare;
+
+
+
 }
