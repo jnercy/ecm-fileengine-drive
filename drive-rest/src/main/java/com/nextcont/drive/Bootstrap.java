@@ -1,8 +1,9 @@
 package com.nextcont.drive;
 
+import com.github.tobato.fastdfs.FdfsClientConfig;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.context.embedded.ConfigurableEmbeddedServletContainer;
+import org.springframework.context.annotation.Import;
 
 /**
  * Created with IntelliJ IDEA.
@@ -11,7 +12,7 @@ import org.springframework.boot.context.embedded.ConfigurableEmbeddedServletCont
  * Time: 17:03
  * To change this template use File | Settings | File Templates.
  */
-
+@Import(FdfsClientConfig.class)
 @SpringBootApplication
 public class Bootstrap{
 

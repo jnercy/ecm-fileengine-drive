@@ -45,7 +45,7 @@ public class FileCallbackImpl implements FileCallbackService {
                 .fetch()
                 .map(record -> record.get(callback.GLOBALID));
 
-        log.info("loopAggregationFileCount:{}",globalIds.size());
+        log.info("loopAggregationFileCount:{}", globalIds.size());
 
         return globalIds;
     }
@@ -56,12 +56,12 @@ public class FileCallbackImpl implements FileCallbackService {
         byte finishStatus = 1;
         int updateCount =
                 dsl.update(callback)
-                .set(callback.AGGREGATIONSTATUS,finishStatus)
-                .where(callback.GLOBALID.in(ids))
-                .execute();
-        log.info("taskFinishingFileCount:{}",updateCount);
+                        .set(callback.AGGREGATIONSTATUS, finishStatus)
+                        .where(callback.GLOBALID.in(ids))
+                        .execute();
+        log.info("taskFinishingFileCount:{}", updateCount);
 
-        return updateCount>0;
+        return updateCount > 0;
     }
 
     @Override
@@ -76,31 +76,33 @@ public class FileCallbackImpl implements FileCallbackService {
                 .stream()
                 .collect(Collectors.groupingBy(record -> record.get(transition.GLOBALID)))
                 .forEach((k, v) -> {
-                    TransitionUnAggregationData.TransitionUnAggregationDataBuilder builder = TransitionUnAggregationData.builder();
-                    v.forEach(queryRecord->{
+                    TransitionUnAggregationData.TransitionUnAggregationDataBuilder builder = TransitionUnAggregationData
+                            .builder();
+                    v.forEach(queryRecord -> {
 
                         String fileType = queryRecord.get(transitionFile.TYPE);
 
-                        if(fileType.equals(FileType.file.name())){
+                        if (fileType.equals(FileType.file.name())) {
                             String fileName = queryRecord.get(transition.FILENAME);
-                            builder.fileId(queryRecord.get(transition.GLOBALID));
-                            builder.fileName(fileName);
-                            builder.size(queryRecord.get(transition.LENGTH));
-                            builder.mimeType(queryRecord.get(transition.MIMETYPE));
-                            builder.createTime(queryRecord.get(transition.CREATEDATE));
-                            builder.webContentLink(queryRecord.get(transitionFile.URL));
-                            builder.md5Checksum(queryRecord.get(transition.MD5DIGEST));
+                            builder
+                                    .fileId(queryRecord.get(transition.GLOBALID))
+                                    .fileName(fileName)
+                                    .size(queryRecord.get(transition.LENGTH))
+                                    .mimeType(queryRecord.get(transition.MIMETYPE))
+                                    .createTime(queryRecord.get(transition.CREATEDATE))
+                                    .webContentLink(queryRecord.get(transitionFile.URL))
+                                    .md5Checksum(queryRecord.get(transition.MD5DIGEST));
 
                             Optional.ofNullable(queryRecord.get(transition.FILEEXTENSION))
-                                    .ifPresent(extension->{
-                                        builder.fullFileExtension(queryRecord.get(transition.FILEEXTENSION));
-                                        builder.fileExtension(queryRecord.get(transition.FILEEXTENSION).replace(".",""));
+                                    .ifPresent(extension -> {
+                                        builder
+                                                .fullFileExtension(queryRecord.get(transition.FILEEXTENSION))
+                                                .fileExtension(queryRecord.get(transition.FILEEXTENSION)
+                                                        .replace(".", ""));
                                     });
-                        }
-                        else if(fileType.equals(FileType.preview.name())){
+                        } else if (fileType.equals(FileType.preview.name())) {
                             builder.previewLink(queryRecord.get(transitionFile.URL));
-                        }
-                        else if(fileType.equals(FileType.thumbnail.name())){
+                        } else if (fileType.equals(FileType.thumbnail.name())) {
                             builder.thumbnailLink(queryRecord.get(transitionFile.URL));
                         }
                     });
@@ -108,7 +110,7 @@ public class FileCallbackImpl implements FileCallbackService {
                 });
 
 
-        log.info("unAggregationFileInfoCount:{}",unAggregationFileInfo.size());
+        log.info("unAggregationFileInfoCount:{}", unAggregationFileInfo.size());
 
         return unAggregationFileInfo;
     }

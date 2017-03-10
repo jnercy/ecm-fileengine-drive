@@ -1,9 +1,8 @@
 package com.nextcont.drive.mongo.service;
 
-import com.nextcont.drive.mongo.MongoQuery;
 import com.nextcont.file.DriveFile;
-import com.nextcont.file.FileList;
-import com.nextcont.file.request.FileListRequest;
+import com.nextcont.file.request.file.FileListRequest;
+import org.bson.Document;
 import org.bson.conversions.Bson;
 
 import java.util.List;
@@ -18,7 +17,7 @@ import java.util.Optional;
  */
 public interface BaseMongoDAO<T>{
 
-    void insert(T t);
+    void insert(Document doc);
 
     void insertMany(List<T> t);
 

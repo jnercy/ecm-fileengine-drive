@@ -1,4 +1,4 @@
-package com.nextcont.file.request;
+package com.nextcont.file.request.file;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;

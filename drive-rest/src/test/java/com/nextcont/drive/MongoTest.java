@@ -55,7 +55,7 @@ public class MongoTest {
                         .modifiedTime("")
                         .folderColorRgb("normal")
                         .build();
-        fileMetaDataService.insert(metaData);
+//        fileMetaDataService.insert(metaData);
     }
 
     @Test

@@ -1,6 +1,5 @@
-package com.nextcont.file.request;
+package com.nextcont.file.request.file;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.nextcont.file.ContentHints;
 import lombok.Data;
 
@@ -9,21 +8,24 @@ import java.util.Map;
 /**
  * Created with IntelliJ IDEA.
  * User: Wangxudong
- * Date: 2017/2/16
- * Time: 13:40
+ * Date: 2017/3/6
+ * Time: 16:30
  * To change this template use File | Settings | File Templates.
  */
 @Data
-@JsonIgnoreProperties(ignoreUnknown = true)
-public class PatchMetadataReqeust {
+public class FileCreateRequestBody {
 
     private Map appProperties;
 
     private ContentHints contentHints;
 
+    private String createTime;
+
     private String description;
 
     private String folderColorRgb;
+
+    private String id;
 
     private String mimeType;
 
@@ -33,18 +35,15 @@ public class PatchMetadataReqeust {
 
     private String originalFilename;
 
+    private String[] parents;
+
     private Map properties;
 
     private String starred;
-
-    private String trashed;
 
     private String viewedByMeTime;
 
     private String viewersCanCopyContent;
 
     private String writersCanShare;
-
-
-
 }

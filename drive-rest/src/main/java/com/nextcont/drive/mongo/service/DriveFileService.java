@@ -3,7 +3,7 @@ package com.nextcont.drive.mongo.service;
 import com.mongodb.Block;
 import com.nextcont.drive.utils.JsonFormat;
 import com.nextcont.file.DriveFile;
-import com.nextcont.file.request.FileListRequest;
+import com.nextcont.file.request.file.FileListRequest;
 import org.bson.Document;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -39,7 +39,7 @@ public class DriveFileService extends BaseMongoService<DriveFile> {
     public List<DriveFile> queryFileList(FileListRequest query) {
         List<DriveFile> result = new ArrayList<>();
         mongoCollection
-                .find(new Document("userRecords.userId",query.getUserId()))
+                .find(new Document("parents","drive"))
                 .projection(driveFileExcludeField)
                 .skip((query.getPageToken() - 1) * query.getPageSize())
                 .limit(query.getPageSize())

@@ -1,17 +1,14 @@
 package com.nextcont.drive.mongo.service;
 
-import com.mongodb.BasicDBObject;
 import com.mongodb.Block;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.result.UpdateResult;
 import com.nextcont.drive.mongo.MongoClientPool;
-import com.nextcont.drive.mongo.MongoQuery;
 import com.nextcont.drive.utils.JsonFormat;
 import com.nextcont.drive.utils.ReflectionUtils;
 import com.nextcont.file.DriveFile;
-import com.nextcont.file.FileList;
-import com.nextcont.file.request.FileListRequest;
+import com.nextcont.file.request.file.FileListRequest;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,8 +18,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
-import static com.mongodb.client.model.Projections.excludeId;
 
 
 /**
@@ -45,8 +40,8 @@ public abstract class BaseMongoService<T> implements BaseMongoDAO<T>{
     MongoCollection<Document> mongoCollection;
 
     @Override
-    public void insert(T t){
-        mongoCollection.insertOne(Document.parse(JsonFormat.convertJson(t).get()));
+    public void insert(Document doc){
+        mongoCollection.insertOne(doc);
     }
 
     @Override

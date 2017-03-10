@@ -1,9 +1,6 @@
 package com.nextcont.file;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -12,7 +9,7 @@ import lombok.NoArgsConstructor;
  * Time: 13:50
  * To change this template use File | Settings | File Templates.
  */
-@Builder
+@Setter
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
@@ -27,5 +24,16 @@ public class Capability {
     private boolean canCopy;
 
     private boolean canReadRevisions;
+
+    public static Capability getInstance(){
+        Capability capability = new Capability();
+        capability.canEdit = true;
+        capability.canComment = true;
+        capability.canShare = true;
+        capability.canCopy = true;
+        capability.canReadRevisions = true;
+
+        return capability;
+    }
 
 }

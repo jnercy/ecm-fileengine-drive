@@ -6,10 +6,7 @@ import com.nextcont.drive.utils.JsonFormat;
 import com.nextcont.drive.utils.StringUtils;
 import com.nextcont.drive.utils.Try;
 import com.nextcont.file.*;
-import com.nextcont.file.request.FileListRequest;
-import com.nextcont.file.request.FileLockRequest;
-import com.nextcont.file.request.FileShareRequest;
-import com.nextcont.file.request.PatchMetadataReqeust;
+import com.nextcont.file.request.file.*;
 import com.nextcont.file.response.ExecutionRecord;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.BsonArray;
@@ -20,7 +17,6 @@ import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -39,7 +35,7 @@ import static com.nextcont.drive.mongo.MongoField.excludeUsersRecords;
  * To change this template use File | Settings | File Templates.
  */
 @RestController
-@RequestMapping("/files")
+@RequestMapping("/drive/v1/files")
 @Slf4j
 public class DriveController {
 
@@ -52,20 +48,52 @@ public class DriveController {
 
     private final String DEMO_USER_ID = "jnercywang@gmail.com";
 
+    @RequestMapping(value = "/{fileId}/copy", method = RequestMethod.POST)
+    public String copy(@PathVariable("fileId") String fileId, FileCopyRequest reuqest, @RequestBody FileRequestbody patchData){
+        return null;
+    }
 
-    @RequestMapping(value = "/get/{fileId}", method = RequestMethod.GET)
+    @RequestMapping(value = "/create", method = RequestMethod.POST)
+    public String create(FileCreateRequest request, @RequestBody FileRequestbody patchData){
+        return null;
+    }
+
+    @RequestMapping(value = "/{fileId}", method = RequestMethod.DELETE)
+    public String delete(@PathVariable("fileId") String fileId) {
+        return "";
+    }
+
+    @RequestMapping(value = "/trash", method = RequestMethod.DELETE)
+    public String emptyTrash() {
+        return "";
+    }
+
+    @RequestMapping(value = "/{fileId}/export", method = RequestMethod.GET)
+    public String export(@PathVariable("fileId") String fileId,@RequestParam("mimeType") String mimeType) {
+        return "";
+    }
+
+
+    @RequestMapping(value = "/generateIds", method = RequestMethod.GET)
+    public String generateIds() {
+
+        return "";
+    }
+
+
+
+
+
+    @RequestMapping(value = "/{fileId}", method = RequestMethod.GET)
     public DriveFile get(@PathVariable("fileId") String fileId) {
-
         DriveFile result = driveFileService
                 .queryOne(eq("id", fileId), driveFileExcludeField)
                 .orElse(null);
-
         return result;
     }
 
     @RequestMapping(value = "/list", method = RequestMethod.POST)
-    public FileList<DriveFile> list(@RequestBody FileListRequest request) {
-
+    public FileList<DriveFile> list(FileListRequest request) {
         List<DriveFile> driveFiles = driveFileService.queryFileList(request);
 
         FileList<DriveFile> result = new FileList<>();
@@ -157,23 +185,23 @@ public class DriveController {
         return fileMetaDataService.queryOne(new Document("id", fileId), excludeUsersRecords).orElse(null);
     }
 
-    @RequestMapping(value = "/metadata", method = RequestMethod.PATCH)
-    public String modifyMetadata(HttpServletRequest request, @RequestBody PatchMetadataReqeust patchData) {
+    @RequestMapping(value = "/metadata/{fileId}", method = RequestMethod.PATCH)
+    public String modifyMetadata(@PathVariable("filed") String fileId, FileMetadataRequest request, @RequestBody FileRequestbody patchData) {
         log.info("[/{}/metadata][method:patch]", "");
-        String fileId = request.getParameter("fileId");
+
         return fileMetaDataService
                 .queryOne(new Document("id", fileId).append("locked",false), excludeUsersRecords)
                 .map(fileMetaData -> {
                     List<Bson> updateBsons = new ArrayList<>();
-                    if(StringUtils.isNotEmpty(request.getParameter("addParents"))){
+                    if(StringUtils.isNotEmpty(request.getAddParents())){
                         List<String> parentList = fileMetaData.getParents();
-                        parentList.add(request.getParameter("addParents"));
+                        parentList.add(request.getAddParents());
                         updateBsons.add(set("parents",parentList));
                     }
-                    else if(StringUtils.isNotEmpty(request.getParameter("removeParents"))){
+                    else if(StringUtils.isNotEmpty(request.getRemoveParents())){
                         List<String> parentList = fileMetaData.getParents()
                                 .stream()
-                                .filter(parentId-> !parentId.equals(request.getParameter("removeParents")))
+                                .filter(parentId-> !parentId.equals(request.getRemoveParents()))
                                 .collect(Collectors.toList());
                         updateBsons.add(set("parents",parentList));
                     }
@@ -222,9 +250,9 @@ public class DriveController {
                     boolean updateResult = fileMetaDataService.updateOne(new Document("id", fileMetaData.getId()),updateBson);
 
                     if(updateResult)
-                        return getSuccessResponse("file metadata update success");
+                        return getSuccessResponse("file metadata update success !!");
                     else
-                        return getSuccessResponse("file metadata update failed");
+                        return getSuccessResponse("file metadata update failed !!");
                 })
                 .orElse(getErrorResponse("file not found or check failed"));
     }

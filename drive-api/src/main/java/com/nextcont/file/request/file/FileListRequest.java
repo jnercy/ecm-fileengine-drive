@@ -1,8 +1,6 @@
-package com.nextcont.file.request;
+package com.nextcont.file.request.file;
 
 import lombok.Data;
-
-import java.io.Serializable;
 
 /**
  * Created with IntelliJ IDEA.
@@ -12,11 +10,13 @@ import java.io.Serializable;
  * To change this template use File | Settings | File Templates.
  */
 @Data
-public class FileListRequest implements Serializable{
+public class FileListRequest{
 
-    private String userId;
+    private String corpora;
 
     private String corpus;
+
+    private boolean includeTeamDriveItems;
 
     private String orderBy;
 
@@ -30,4 +30,8 @@ public class FileListRequest implements Serializable{
      * 以逗号分隔的语料库中要查询的空格列表。支持的值为“drive”，“appDataFolder”和“photos”。
      */
     private String spaces;
+
+    private boolean supportsTeamDrives;
+
+    private String teamDriveId;
 }
