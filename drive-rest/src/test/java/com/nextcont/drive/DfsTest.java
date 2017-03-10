@@ -4,6 +4,7 @@ import com.github.tobato.fastdfs.FdfsClientConfig;
 import com.github.tobato.fastdfs.domain.StorePath;
 import com.github.tobato.fastdfs.service.AppendFileStorageClient;
 import com.github.tobato.fastdfs.service.FastFileStorageClient;
+import com.nextcont.drive.utils.IdGenService;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -34,6 +35,9 @@ public class DfsTest {
     @Autowired
     private AppendFileStorageClient storageClient;
 
+    @Autowired
+    private IdGenService idGenService;
+
     @Test
     public void test() throws FileNotFoundException {
         File file = new File("D://6m.avi.1.part");
@@ -49,5 +53,15 @@ public class DfsTest {
         InputStream in = new FileInputStream(file);
         storageClient.appendFile("group1","M00/00/3F/wKgPzVjBC8-EA_gaAAAAALCu_Cg.6m.avi",in,file.length());
     }
+
+
+    @Test
+    public void testId(){
+        for (int i = 0; i < 10; i++) {
+            System.out.println(idGenService.nextId());
+        }
+    }
+
+
 
 }

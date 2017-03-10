@@ -32,18 +32,18 @@ public class DriveManagerController {
 
 
 
-    @RequestMapping(value = "/folder", method = RequestMethod.POST)
-    public String createFolder(@RequestBody FileCreateRequest request) {
-        TransitionUnAggregationData.TransitionUnAggregationDataBuilder builder = TransitionUnAggregationData.builder();
-        FileCreateRequestBody requestBody = request.getRequestBody();
-        builder
-                .fileId(UUIDUtils.getId())
-                .fileName(requestBody.getName())
-                .mimeType("application/vnd.google-apps.folder")
-                .createTime(DateTime.now().toDate())
-                .webContentLink("");
-        return "";
-    }
+//    @RequestMapping(value = "/folder", method = RequestMethod.POST)
+//    public String createFolder(@RequestBody FileCreateRequest request) {
+//        TransitionUnAggregationData.TransitionUnAggregationDataBuilder builder = TransitionUnAggregationData.builder();
+//        FileCreateRequestBody requestBody = request.getRequestBody();
+//        builder
+//                .fileId(UUIDUtils.getId())
+//                .fileName(requestBody.getName())
+//                .mimeType("application/vnd.google-apps.folder")
+//                .createTime(DateTime.now().toDate())
+//                .webContentLink("");
+//        return "";
+//    }
 
 
 

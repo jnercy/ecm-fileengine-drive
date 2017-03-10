@@ -6,17 +6,15 @@ import lombok.Data;
  * Created with IntelliJ IDEA.
  * User: Wangxudong
  * Date: 2017/3/10
- * Time: 15:03
+ * Time: 15:12
  * To change this template use File | Settings | File Templates.
  */
 @Data
-public class PermissionListRequest {
+public class PermissionUpdateRequest {
 
-    private Integer pageSize;
-
-    private String pageToken;
+    private boolean removeExpiration;
 
     private boolean supportsTeamDrives;
 
-
+    private boolean transferOwnership;
 }
