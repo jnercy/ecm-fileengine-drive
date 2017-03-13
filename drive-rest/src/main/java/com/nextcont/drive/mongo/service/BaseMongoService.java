@@ -3,6 +3,7 @@ package com.nextcont.drive.mongo.service;
 import com.mongodb.Block;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
 import com.nextcont.drive.mongo.MongoClientPool;
 import com.nextcont.drive.utils.JsonFormat;
@@ -117,6 +118,12 @@ public abstract class BaseMongoService<T> implements BaseMongoDAO<T>{
     public boolean updateMany(Bson query, Bson updates) {
         UpdateResult result = mongoCollection.updateMany(query,updates);
         return result.getModifiedCount()>0;
+    }
+
+    @Override
+    public boolean delete(Bson query) {
+        DeleteResult result = mongoCollection.deleteMany(query);
+        return result.getDeletedCount()>0;
     }
 
 

@@ -28,7 +28,7 @@ public class DriveUploadController {
     private FastFileStorageClient storageClient;
 
 
-    @RequestMapping(value = "/drive/files" , method = RequestMethod.POST)
+    @RequestMapping(value = "/drive/v1/files" , method = RequestMethod.POST)
     public String uploadFIle( @RequestParam("file") MultipartFile file){
         String name = file.getName();
         if (!file.isEmpty()) {

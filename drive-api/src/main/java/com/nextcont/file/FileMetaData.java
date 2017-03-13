@@ -128,4 +128,7 @@ public class FileMetaData implements Serializable{
 
     private List<FileProcessRecord> userRecords;
 
+    public void setId(String id) {
+        this.id = id;
+    }
 }

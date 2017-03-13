@@ -34,4 +34,6 @@ public interface BaseMongoDAO<T>{
     boolean updateOne(Bson query, Bson updates);
 
     boolean updateMany(Bson query, Bson updates);
+
+    boolean delete(Bson query);
 }
