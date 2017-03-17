@@ -1,5 +1,6 @@
 package com.nextcont.drive.mongo.service;
 
+import com.nextcont.drive.mongo.MongoInnerDomQuery;
 import com.nextcont.file.DriveFile;
 import com.nextcont.file.request.file.FileListRequest;
 import org.bson.Document;
@@ -36,4 +37,6 @@ public interface BaseMongoDAO<T>{
     boolean updateMany(Bson query, Bson updates);
 
     boolean delete(Bson query);
+
+    Optional<T> queryInnerDocument(MongoInnerDomQuery query);
 }

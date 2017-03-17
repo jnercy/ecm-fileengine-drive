@@ -17,8 +17,11 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 public class RevisionController {
 
+
+
     @RequestMapping(value = "/{fileId}/revisions/{revisionId}", method = RequestMethod.DELETE)
     public String delete(@PathVariable("fileId") String fileId,@PathVariable("revisionId") String permissionId){
+
         return null;
     }
 
@@ -37,12 +40,5 @@ public class RevisionController {
     public String update(@PathVariable("fileId") String fileId, @PathVariable("revisionId") String revisionId,@RequestBody RevisionUpdateReqeustbody bodyData){
         return null;
     }
-
-
-
-
-
-
-
 
 }

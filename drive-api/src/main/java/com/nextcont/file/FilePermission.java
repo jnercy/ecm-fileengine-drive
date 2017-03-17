@@ -1,9 +1,6 @@
 package com.nextcont.file;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -14,6 +11,7 @@ import lombok.NoArgsConstructor;
  */
 @Builder
 @Getter
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
 public class FilePermission {

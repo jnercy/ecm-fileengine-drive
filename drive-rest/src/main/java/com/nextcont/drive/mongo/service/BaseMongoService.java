@@ -6,9 +6,11 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
 import com.nextcont.drive.mongo.MongoClientPool;
+import com.nextcont.drive.mongo.MongoInnerDomQuery;
 import com.nextcont.drive.utils.JsonFormat;
 import com.nextcont.drive.utils.ReflectionUtils;
 import com.nextcont.file.DriveFile;
+import com.nextcont.file.FilePermission;
 import com.nextcont.file.request.file.FileListRequest;
 import org.bson.Document;
 import org.bson.conversions.Bson;
@@ -16,9 +18,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import static com.mongodb.client.model.Aggregates.*;
+import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Projections.*;
 
 
 /**
@@ -124,6 +131,24 @@ public abstract class BaseMongoService<T> implements BaseMongoDAO<T>{
     public boolean delete(Bson query) {
         DeleteResult result = mongoCollection.deleteMany(query);
         return result.getDeletedCount()>0;
+    }
+
+    @Override
+    public Optional<T> queryInnerDocument(MongoInnerDomQuery query) {
+        Document result= mongoCollection
+                .aggregate(
+                        Arrays.asList(
+                                match(query.getParentQuery()),
+                                project(fields(include(query.getInnerFieldName()),excludeId())),
+                                unwind("$"+query.getInnerFieldName()),
+                                match(query.getInnerDomQuery())
+                        )
+                )
+                .first();
+
+        Document innerDoc = result.get( query.getInnerFieldName(),Document.class);
+
+        return JsonFormat.convert2Object(innerDoc.toJson(),getEntityClass());
     }
 
 

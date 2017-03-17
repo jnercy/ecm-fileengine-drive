@@ -8,5 +8,5 @@ package com.nextcont.file;
  * To change this template use File | Settings | File Templates.
  */
 public enum FileShareRole {
-    owner,write,comment,read
+    organizer,owner,write,comment,read
 }

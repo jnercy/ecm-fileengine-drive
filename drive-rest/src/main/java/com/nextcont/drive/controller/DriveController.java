@@ -26,6 +26,8 @@ import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Updates.*;
 import static com.nextcont.drive.mongo.MongoField.driveFileExcludeField;
 import static com.nextcont.drive.mongo.MongoField.excludeUsersRecords;
+import static com.nextcont.drive.utils.ResponseMaker.getErrorResponse;
+import static com.nextcont.drive.utils.ResponseMaker.getSuccessResponse;
 
 
 /**
@@ -284,15 +286,5 @@ public class DriveController {
                 })
                 .orElse(getErrorResponse("file not found or check failed"));
     }
-
-
-    public String getSuccessResponse(String message) {
-        return JsonFormat.convertJson(ExecutionRecord.generateSuccessResponse(message)).orElse(message);
-    }
-
-    public String getErrorResponse(String message) {
-        return JsonFormat.convertJson(ExecutionRecord.generateErrorResponse(message)).orElse(message);
-    }
-
 
 }

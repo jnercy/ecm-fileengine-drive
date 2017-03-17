@@ -15,7 +15,7 @@ import javax.annotation.PostConstruct;
  * To change this template use File | Settings | File Templates.
  */
 @Service
-public class FileMetaDataService extends BaseMongoService<FileMetaData> {
+public class FileMetaDataService<T> extends BaseMongoService<T> {
 
     @Value("${mongodb.collection.metadata}")
     private String collection4metadata;

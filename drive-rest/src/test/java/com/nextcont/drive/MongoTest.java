@@ -2,6 +2,7 @@ package com.nextcont.drive;
 
 import com.nextcont.drive.jooq.service.FileCallbackService;
 import com.nextcont.drive.mongo.MongoField;
+import com.nextcont.drive.mongo.MongoInnerDomQuery;
 import com.nextcont.drive.mongo.service.BaseMongoService;
 import com.nextcont.file.*;
 import lombok.extern.slf4j.Slf4j;
@@ -11,10 +12,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.util.Date;
 import java.util.List;
 
-import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
 
 /**
@@ -34,6 +33,9 @@ public class MongoTest {
 
     @Autowired
     private BaseMongoService<FileMetaData> fileMetaDataService;
+
+    @Autowired
+    private BaseMongoService<FilePermission> permissionService;
 
     @Autowired
     private BaseMongoService<DriveFile> driveFileService;
@@ -60,11 +62,19 @@ public class MongoTest {
 
     @Test
     public void testCurd(){
-        String filedId = "7d4a3ef8-015f-431e-95c2-16b505bbb8da";
-        List<FileMetaData> result =
-                fileMetaDataService.query(and(eq("id",filedId),eq("userId","")), MongoField.driveFileExcludeField);
-        System.out.println();
+        MongoInnerDomQuery.MongoInnerDomQueryBuilder builder = MongoInnerDomQuery.builder();
+        MongoInnerDomQuery query = builder
+                .parentQuery(eq("id","7d4a3ef8-015f-431e-95c2-16b505bbb8da"))
+                .innerDomQuery(eq("permissions.type", "user"))
+                .innerFieldName("permissions")
+                .build();
+        FilePermission permissions = permissionService
+                .queryInnerDocument(query)
+                .orElse(null);
+
+        System.out.println(permissions);
     }
+
 
     @Test
     public void testDriveFile(){
