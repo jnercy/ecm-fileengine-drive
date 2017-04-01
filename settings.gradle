@@ -1,0 +1,4 @@
+rootProject.name = 'drive'
+include 'drive-api'
+include 'drive-rest'
+
