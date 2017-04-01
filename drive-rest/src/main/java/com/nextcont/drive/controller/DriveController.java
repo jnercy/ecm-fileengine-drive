@@ -70,7 +70,7 @@ public class DriveController {
                                     })
                                     .orElse(getErrorResponse("parse error. please check FileMetaData bean!"));
                         })
-                        .orElse("");
+                        .orElse(getErrorResponse("fileId not found . please check fileId isExsit"));
         return result;
 
     }
@@ -95,8 +95,9 @@ public class DriveController {
 
     @RequestMapping(value = "/{fileId}", method = RequestMethod.DELETE)
     public String trash(@PathVariable("fileId") String fileId) {
-        boolean trashStauts = fileMetaDataService.updateOne(new Document("id",fileId),set("trashed",true));
-        return trashStauts ? getSuccessResponse("delete success.") : getErrorResponse("delete error.");
+        Bson queryBson = new Document("id",fileId);
+        Bson trashBson = set("trashed",true);
+        return fileMetaDataService.updateOne(queryBson,trashBson) ? getSuccessResponse("trash success.") : getErrorResponse("trash error.");
     }
 
     @RequestMapping(value = "/trash", method = RequestMethod.DELETE)
