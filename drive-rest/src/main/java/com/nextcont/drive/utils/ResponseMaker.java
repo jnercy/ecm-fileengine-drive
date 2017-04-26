@@ -11,11 +11,11 @@ import com.nextcont.file.response.ExecutionRecord;
  */
 public class ResponseMaker {
 
-    public static String getSuccessResponse(String message) {
-        return JsonFormat.convertJson(ExecutionRecord.generateSuccessResponse(message)).orElse(message);
+    public static Object getSuccessResponse(String message) {
+        return ExecutionRecord.generateSuccessResponse(message);
     }
 
-    public static String getErrorResponse(String message) {
-        return JsonFormat.convertJson(ExecutionRecord.generateErrorResponse(message)).orElse(message);
+    public static Object getErrorResponse(String message) {
+        return ExecutionRecord.generateErrorResponse(message);
     }
 }

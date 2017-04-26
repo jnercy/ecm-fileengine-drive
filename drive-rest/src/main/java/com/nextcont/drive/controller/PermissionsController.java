@@ -5,6 +5,7 @@ import com.nextcont.drive.mongo.service.BaseMongoService;
 import com.nextcont.drive.utils.IdGenService;
 import com.nextcont.drive.utils.JsonFormat;
 import com.nextcont.drive.utils.Try;
+import com.nextcont.drive.utils.Tuple;
 import com.nextcont.file.*;
 import com.nextcont.file.request.permission.*;
 import lombok.extern.slf4j.Slf4j;
@@ -13,6 +14,8 @@ import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,6 +27,7 @@ import static com.mongodb.client.model.Updates.inc;
 import static com.mongodb.client.model.Updates.set;
 import static com.nextcont.drive.utils.ResponseMaker.getErrorResponse;
 import static com.nextcont.drive.utils.ResponseMaker.getSuccessResponse;
+import static com.nextcont.drive.utils.TupleFactories.pairs;
 
 /**
  * Created with IntelliJ IDEA.
@@ -51,11 +55,10 @@ public class PermissionsController {
     private IdGenService idGenService;
 
 
-
-
     @RequestMapping(value = "/{fileId}/permissions", method = RequestMethod.POST)
-    public String create(@PathVariable("fileId") String fileId, PermissionCreateRequest request, @RequestBody PermissionCreateRequestbody bodyData){
-        String proccessRecord = fileMetaDataService
+    public ResponseEntity<Object> create(@PathVariable("fileId") String fileId, PermissionCreateRequest request, @RequestBody PermissionCreateRequestbody bodyData){
+
+        Tuple<Object,HttpStatus> result  = fileMetaDataService
                 .queryOneFullField(new Document("owners.emailAddress", "jnercywang@gmail.com").append("id",fileId).append("locked", false))
                 .map(driveFile -> {
                             Try<String> proccessTry = Try.tried(driveFile, file -> {
@@ -93,19 +96,19 @@ public class PermissionsController {
                                 log.info("share update status:{}", updateResult ? "success" : "failed");
                                 return "sharing success";
                             });
-                            return proccessTry.isSuccess() ? getSuccessResponse(proccessTry.getOrThrow()) : getErrorResponse(proccessTry.getOrThrow());
+                            return proccessTry.isSuccess() ? pairs(getSuccessResponse(proccessTry.getOrThrow()),HttpStatus.OK) : pairs(getErrorResponse(proccessTry.getOrThrow()),HttpStatus.BAD_REQUEST);
                         }
-                ).orElse(getErrorResponse("file not found or check failed"));
+                ).orElse(pairs(getErrorResponse("file not found or check failed"),HttpStatus.BAD_REQUEST));
 
-        return proccessRecord;
+        return new ResponseEntity<>(result.v1(),result.v2());
     }
 
 
     @RequestMapping(value = "/{fileId}/permissions/{permissionId}", method = RequestMethod.DELETE)
-    public String delete(@PathVariable("fileId") String fileId,@PathVariable String permissionId, @RequestParam boolean supportsTeamDrives){
-        String proccessRecord = fileMetaDataService
-                .queryOneFullField(new Document("owners.emailAddress", "jnercywang@gmail.com").append("id",fileId)
-                        .append("locked", false))
+    public ResponseEntity<Object> delete(@PathVariable("fileId") String fileId,@PathVariable String permissionId, @RequestParam boolean supportsTeamDrives){
+
+        Tuple<Object,HttpStatus> result = fileMetaDataService
+                .queryOneFullField(new Document("owners.emailAddress", "jnercywang@gmail.com").append("id",fileId).append("locked", false))
                 .map(driveFile -> {
                             List<FilePermission> permissions = driveFile.getPermissions();
                             boolean hasPermissionId = permissions.removeIf(p-> Objects.equals(p.getId(), permissionId));
@@ -113,16 +116,17 @@ public class PermissionsController {
                                 BsonArray permissionArray = new BsonArray();
                                 permissions.forEach(p -> permissionArray.add(BsonDocument.parse(JsonFormat.toJson(p))));
                                 boolean deleteResult = driveFileService.updateOne(new Document("id",fileId),set("permissions", permissionArray));
-                                return getErrorResponse(deleteResult ? "delete execute success!" : "delete execute failed!");
+                                return deleteResult ? pairs(getSuccessResponse("delete execute success!"),HttpStatus.OK) : pairs(getErrorResponse("delete execute failed!"),HttpStatus.BAD_REQUEST);
                             }else
-                                return getErrorResponse("permission Not found");
+                                return pairs(getErrorResponse("permission Not found"),HttpStatus.BAD_REQUEST);
                         }
-                ).orElse(getErrorResponse("file not found or check failed"));
-        return proccessRecord;
+                ).orElse(pairs(getErrorResponse("file not found or check failed"),HttpStatus.BAD_REQUEST));
+
+        return new ResponseEntity<>(result.v1(),result.v2());
     }
 
     @RequestMapping(value = "/{fileId}/permissions/{permissionId}", method = RequestMethod.GET)
-    public FilePermission get(@PathVariable("fileId") String fileId,@PathVariable String permissionId, @RequestParam boolean supportsTeamDrives){
+    public ResponseEntity<Object> get(@PathVariable("fileId") String fileId,@PathVariable String permissionId, @RequestParam boolean supportsTeamDrives){
         MongoInnerDomQuery.MongoInnerDomQueryBuilder builder = MongoInnerDomQuery.builder();
         MongoInnerDomQuery query = builder
                 .parentQuery(eq("id",fileId))
@@ -132,21 +136,21 @@ public class PermissionsController {
         FilePermission permissions = permissionService
                 .queryInnerDocument(query)
                 .orElse(null);
-        return permissions;
+        return new ResponseEntity<>(permissions,HttpStatus.OK);
     }
 
     @RequestMapping(value = "/{fileId}/permissions", method = RequestMethod.GET)
-    public List<FilePermission> list(@PathVariable("fileId") String fileId, PermissionListRequest request){
+    public ResponseEntity<?> list(@PathVariable("fileId") String fileId, PermissionListRequest request){
         List<FilePermission> permissions = fileMetaDataService
                 .queryOneFullField(new Document("id",fileId))
                 .map(FileMetaData::getPermissions).orElse(null);
-        return permissions;
+        return new ResponseEntity<>(permissions,HttpStatus.OK);
     }
 
 
     @RequestMapping(value = "/{fileId}/permissions/{permissionId}", method = RequestMethod.PATCH)
-    public String update(@PathVariable("fileId") String fileId, @PathVariable String permissionId, PermissionUpdateRequest request, @RequestBody PermissionUpdateRequestbody bodyData){
-        String proccessRecord = fileMetaDataService
+    public ResponseEntity<Object> update(@PathVariable("fileId") String fileId, @PathVariable String permissionId, PermissionUpdateRequest request, @RequestBody PermissionUpdateRequestbody bodyData){
+        Tuple<Object,HttpStatus> result = fileMetaDataService
                 .queryOneFullField(new Document("owners.emailAddress", "jnercywang@gmail.com").append("id",fileId)
                         .append("locked", false))
                 .map(driveFile -> {
@@ -158,9 +162,10 @@ public class PermissionsController {
                             BsonArray permissionArray = new BsonArray();
                             permissions.forEach(p -> permissionArray.add(BsonDocument.parse(JsonFormat.toJson(p))));
                             boolean updateResult = driveFileService.updateOne(new Document("id",fileId),set("permissions", permissionArray));
-                            return updateResult ? "update execute success!" : "update execute failed!";
+                            return updateResult ? pairs(getSuccessResponse("update execute success!"),HttpStatus.OK) : pairs(getErrorResponse("update execute failed!"),HttpStatus.BAD_REQUEST);
                         }
-                ).orElse(getErrorResponse("file not found or check failed"));
-        return proccessRecord;
+                ).orElse(pairs(getErrorResponse("file not found or check failed"),HttpStatus.BAD_REQUEST));
+
+        return new ResponseEntity<>(result.v1(),result.v2());
     }
 }
