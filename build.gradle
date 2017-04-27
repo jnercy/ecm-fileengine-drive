@@ -43,4 +43,8 @@ subprojects {
                 "joda-time:joda-time:2.9.6"
         )
     }
+
+//    tasks.withType(JavaCompile) {
+//        options.encoding = "UTF-8"
+//    }
 }

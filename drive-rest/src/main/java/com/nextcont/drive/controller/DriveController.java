@@ -8,6 +8,7 @@ import com.nextcont.drive.service.FileMetadataMaker;
 import com.nextcont.drive.utils.IdGenService;
 import com.nextcont.drive.utils.JsonFormat;
 import com.nextcont.drive.utils.StringUtils;
+import com.nextcont.drive.utils.Tuple;
 import com.nextcont.file.DriveFile;
 import com.nextcont.file.FileList;
 import com.nextcont.file.FileMetaData;
@@ -17,6 +18,8 @@ import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -29,6 +32,7 @@ import static com.nextcont.drive.mongo.MongoField.driveFileExcludeField;
 import static com.nextcont.drive.mongo.MongoField.excludeUsersRecords;
 import static com.nextcont.drive.utils.ResponseMaker.getErrorResponse;
 import static com.nextcont.drive.utils.ResponseMaker.getSuccessResponse;
+import static com.nextcont.drive.utils.TupleFactories.pairs;
 
 
 /**
@@ -56,9 +60,9 @@ public class DriveController {
     private final String DEMO_USER_ID = "jnercywang@gmail.com";
 
     @RequestMapping(value = "/{fileId}/copy", method = RequestMethod.POST)
-    public String copy(@PathVariable("fileId") String fileId, FileCopyRequest reuqest, @RequestBody FileRequestbody patchData) {
-        String result =
-                fileMetaDataService
+    public ResponseEntity<Object> copy(@PathVariable("fileId") String fileId, FileCopyRequest reuqest, @RequestBody FileRequestbody patchData) {
+
+        Tuple<Object,HttpStatus> result = fileMetaDataService
                         .queryOneFullField(new Document("id", fileId))
                         .map(record -> {
                             record.setId(String.valueOf(idGenService.nextId()));
@@ -66,17 +70,18 @@ public class DriveController {
                                     .map(insertJson -> {
                                         Document doc = Document.parse(insertJson);
                                         fileMetaDataService.insert(doc);
-                                        return getSuccessResponse("insert success.");
+                                        return pairs(getSuccessResponse("insert success."),HttpStatus.OK);
                                     })
-                                    .orElse(getErrorResponse("parse error. please check FileMetaData bean!"));
+                                    .orElse(pairs(getErrorResponse("parse error. please check FileMetaData bean!"),HttpStatus.BAD_REQUEST));
                         })
-                        .orElse(getErrorResponse("fileId not found . please check fileId isExsit"));
-        return result;
+                        .orElse(pairs(getErrorResponse("fileId not found . please check fileId isExsit"),HttpStatus.BAD_REQUEST));
+
+        return new ResponseEntity<>(result.v1(),result.v2());
 
     }
 
     @RequestMapping(value = "/create", method = RequestMethod.POST)
-    public String create(FileCreateRequest request, @RequestBody FileCreateRequestBody data) {
+    public ResponseEntity<Object> create(FileCreateRequest request, @RequestBody FileCreateRequestBody data) {
         TransitionUnAggregationData.TransitionUnAggregationDataBuilder builder = TransitionUnAggregationData.builder();
         TransitionUnAggregationData createFileInfo = builder
                 .fileId(data.getId())
@@ -90,23 +95,26 @@ public class DriveController {
 
         fileMetaDataService.insert(createFileDom);
 
-        return getSuccessResponse("file create success . ");
+        return new ResponseEntity<>(getSuccessResponse("file create success . "),HttpStatus.OK);
     }
 
     @RequestMapping(value = "/{fileId}", method = RequestMethod.DELETE)
-    public String trash(@PathVariable("fileId") String fileId) {
+    public ResponseEntity<Object> trash(@PathVariable("fileId") String fileId) {
         Bson queryBson = new Document("id",fileId);
         Bson trashBson = set("trashed",true);
-        return fileMetaDataService.updateOne(queryBson,trashBson) ? getSuccessResponse("trash success.") : getErrorResponse("trash error.");
+        boolean updateStatus = fileMetaDataService.updateOne(queryBson,trashBson);
+
+        Object result = updateStatus ? getSuccessResponse("trash success.") : getErrorResponse("trash error.");
+        return new ResponseEntity<>(result,HttpStatus.OK);
     }
 
     @RequestMapping(value = "/trash", method = RequestMethod.DELETE)
-    public String emptyTrash() {
+    public ResponseEntity<Object> emptyTrash() {
         fileMetaDataService
                 .query(new Document("trashed",true).append("owners.emailAddress",DEMO_USER_ID),driveFileExcludeField)
                 .forEach(records-> fileMetaDataService.delete(new Document("id",records.getId())));
 
-        return getSuccessResponse("trash success");
+        return new ResponseEntity<>(getSuccessResponse("trash success"),HttpStatus.OK);
     }
 
     @RequestMapping(value = "/{fileId}/export", method = RequestMethod.GET)
@@ -122,15 +130,15 @@ public class DriveController {
 
 
     @RequestMapping(value = "/{fileId}", method = RequestMethod.GET)
-    public DriveFile get(@PathVariable("fileId") String fileId) {
+    public ResponseEntity<Object> get(@PathVariable("fileId") String fileId) {
         DriveFile result = driveFileService
                 .queryOne(eq("id", fileId), driveFileExcludeField)
                 .orElse(null);
-        return result;
+        return new ResponseEntity<>(result,HttpStatus.OK);
     }
 
     @RequestMapping(value = "/list", method = RequestMethod.POST)
-    public FileList<DriveFile> list(FileListRequest request) {
+    public ResponseEntity<Object> list(FileListRequest request) {
 
         MongoQuery query = MongoQuery
                 .builder()
@@ -147,13 +155,13 @@ public class DriveController {
         result.setFiles(driveFiles);
         result.setNextPageToken(request.getPageToken() + 1);
 
-        return result;
+        return new ResponseEntity<>(result,HttpStatus.OK);
     }
 
     @RequestMapping(value = "/lock", method = RequestMethod.POST)
-    public String lock(@RequestBody FileLockRequest request) {
+    public ResponseEntity<Object> lock(@RequestBody FileLockRequest request) {
         try {
-            String result = fileMetaDataService.queryOneFullField(new Document("owners.emailAddress", request.getUserId())
+            Tuple<Object,HttpStatus> result = fileMetaDataService.queryOneFullField(new Document("owners.emailAddress", request.getUserId())
                     .append("id", request.getFileId())
                     .append("locked", false))
                     .map(record -> {
@@ -163,26 +171,26 @@ public class DriveController {
                         boolean updateResult = fileMetaDataService.updateOne(new Document("id", request.getFileId()), combine(set("locked", true), updateLockInfo));
                         String status = updateResult ? "success" : "failed";
                         log.info("lock update status:{}", status);
-                        return getSuccessResponse("lock update status:" + status);
+                        return pairs(getSuccessResponse("lock update status:" + status),HttpStatus.OK);
                     })
-                    .orElse(getErrorResponse("file not found or check failed"));
-            return result;
+                    .orElse(pairs(getErrorResponse("file not found or check failed"),HttpStatus.BAD_REQUEST));
+            return new ResponseEntity<>(result.v1(),result.v2());
         } catch (Exception e) {
             e.printStackTrace();
-            return getErrorResponse(e.getMessage());
+            return new ResponseEntity<>(getErrorResponse(e.getMessage()),HttpStatus.BAD_REQUEST);
         }
     }
 
 
     @RequestMapping(value = "/metadata/{fileId}", method = RequestMethod.GET)
-    public Object getMetadata(@PathVariable("fileId") String fileId) {
+    public ResponseEntity<Object> getMetadata(@PathVariable("fileId") String fileId) {
         log.info("[/{}/metadata][method:{}]", fileId, "get");
         Object result = fileMetaDataService.queryOne(new Document("id", fileId), excludeUsersRecords).orElse(null);
-        return result !=null ? result : getErrorResponse("fileId not found.");
+        return result !=null ? new ResponseEntity<>(result,HttpStatus.OK) : new ResponseEntity<>(getErrorResponse("fileId not found."),HttpStatus.BAD_REQUEST);
     }
 
     @RequestMapping(value = "/metadata/{fileId}", method = RequestMethod.PATCH)
-    public String modifyMetadata(@PathVariable("filed") String fileId, FileMetadataRequest request, @RequestBody FileRequestbody patchData) {
+    public ResponseEntity<Object> modifyMetadata(@PathVariable("filed") String fileId, FileMetadataRequest request, @RequestBody FileRequestbody patchData) {
         log.info("[/{}/metadata][method:patch]", "");
 
         return fileMetaDataService
@@ -244,11 +252,11 @@ public class DriveController {
                     boolean updateResult = fileMetaDataService.updateOne(new Document("id", fileMetaData.getId()), updateBson);
 
                     if (updateResult)
-                        return getSuccessResponse("file metadata update success !!");
+                        return new ResponseEntity<>(getSuccessResponse("file metadata update success."),HttpStatus.OK);
                     else
-                        return getSuccessResponse("file metadata update failed !!");
+                        return new ResponseEntity<>(getErrorResponse("file metadata update failed."),HttpStatus.BAD_REQUEST);
                 })
-                .orElse(getErrorResponse("file not found or check failed"));
+                .orElse(new ResponseEntity<>(getErrorResponse("file not found or check failed."),HttpStatus.BAD_REQUEST));
     }
 
 }

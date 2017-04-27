@@ -1,6 +1,6 @@
-package com.nextcont.file;
+package com.nextcont.file.folder;
 
-import lombok.*;
+import lombok.Data;
 
 /**
  * Created with IntelliJ IDEA.
@@ -9,21 +9,18 @@ import lombok.*;
  * Time: 13:50
  * To change this template use File | Settings | File Templates.
  */
-@Setter
-@Getter
-@AllArgsConstructor
-@NoArgsConstructor
+@Data
 public class Capability {
 
-    private boolean canEdit;
+    public  boolean canEdit;
 
-    private boolean canComment;
+    public boolean canComment;
 
-    private boolean canShare;
+    public boolean canShare;
 
-    private boolean canCopy;
+    public boolean canCopy;
 
-    private boolean canReadRevisions;
+    public boolean canReadRevisions;
 
     public static Capability getInstance(){
         Capability capability = new Capability();

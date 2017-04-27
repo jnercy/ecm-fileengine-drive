@@ -1,6 +1,5 @@
 package com.nextcont.file.folder;
 
-import com.nextcont.file.Capability;
 import lombok.*;
 
 /**
@@ -10,10 +9,7 @@ import lombok.*;
  * Time: 14:54
  * To change this template use File | Settings | File Templates.
  */
-@Setter
-@Getter
-@AllArgsConstructor
-@NoArgsConstructor
+@Data
 public class FolderCapability extends Capability{
 
     private boolean canAddChildren;
@@ -39,11 +35,11 @@ public class FolderCapability extends Capability{
 
         FolderCapability folderCapability = new FolderCapability();
 
-        folderCapability.setCanEdit(true);
-        folderCapability.setCanComment(true);
-        folderCapability.setCanShare(true);
-        folderCapability.setCanCopy(false);
-        folderCapability.setCanReadRevisions(false);
+        folderCapability.canEdit=true;
+        folderCapability.canComment=true;
+        folderCapability.canShare=true;
+        folderCapability.canCopy=false;
+        folderCapability.canReadRevisions=false;
         folderCapability.canAddChildren = true;
         folderCapability.canDelete = true;
         folderCapability.canDownload = true;

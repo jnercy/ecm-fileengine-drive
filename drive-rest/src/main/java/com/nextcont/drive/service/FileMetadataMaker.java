@@ -3,6 +3,7 @@ package com.nextcont.drive.service;
 import com.nextcont.drive.jooq.bean.TransitionUnAggregationData;
 import com.nextcont.drive.utils.BeanUtil;
 import com.nextcont.file.*;
+import com.nextcont.file.folder.Capability;
 import com.nextcont.file.folder.FolderCapability;
 import org.bson.Document;
 import org.joda.time.DateTime;

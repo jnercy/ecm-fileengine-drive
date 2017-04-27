@@ -21,12 +21,12 @@ public class TransRequest {
     private RequestData data;
 
     public static TransRequest getHttpRequest(String fileName,String source,String fileId){
-        TransRequest request = new TransRequest();
-        RequestData data = new RequestData();
-        data.setFileName(fileName);
-        data.setSource(source);
-        data.setFileId(fileId);
-        request.setData(data);
-        return request;
+//        TransRequest request = new TransRequest();
+//        RequestData data = new RequestData();
+//        data.setFileName(fileName);
+//        data.setSource(source);
+//        data.setFileId(fileId);
+//        request.setData(data);
+        return null;
     }
 }

@@ -1,5 +1,6 @@
 package com.nextcont.file;
 
+import com.nextcont.file.folder.Capability;
 import lombok.*;
 
 import java.io.Serializable;
