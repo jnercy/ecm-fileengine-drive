@@ -23,25 +23,29 @@ public class PermissionsControllerTest extends AbstractControllerTest {
 		bodyData.setName("testNameexistedFileId");
 		bodyData.setMimeType("testMimeTypeexistedFileId");
 
-		given().contentType(MediaType.APPLICATION_JSON_VALUE).body(bodyData).when().post("/files/create").then().statusCode(HttpStatus.SC_OK);
+		give().header(tokenHeader, validToken).contentType(MediaType.APPLICATION_JSON_VALUE).body(bodyData).when()
+				.post("/files/create").then().statusCode(HttpStatus.SC_OK);
 
 		bodyData.setId(deletedFileID);
 		bodyData.setName("testNamedeletedFileID");
 		bodyData.setMimeType("testMimeTypedeletedFileID");
 
-		given().contentType(MediaType.APPLICATION_JSON_VALUE).body(bodyData).when().post("/files/create").then().statusCode(HttpStatus.SC_OK);
+		give().header(tokenHeader, validToken).contentType(MediaType.APPLICATION_JSON_VALUE).body(bodyData).when()
+				.post("/files/create").then().statusCode(HttpStatus.SC_OK);
 	}
-	
+
 	private void deleteTestFileData() {
-		given().pathParam("fileId", existedFileId).when().delete("/files/{fileId}").then().statusCode(HttpStatus.SC_OK);
-		given().pathParam("fileId", deletedFileID).when().delete("/files/{fileId}").then().statusCode(HttpStatus.SC_OK);
-		given().when().delete("/files/trash").then().statusCode(HttpStatus.SC_OK);
+		give().header(tokenHeader, validToken).pathParam("fileId", existedFileId).when().delete("/files/{fileId}")
+				.then().statusCode(HttpStatus.SC_OK);
+		give().header(tokenHeader, validToken).pathParam("fileId", deletedFileID).when().delete("/files/{fileId}")
+				.then().statusCode(HttpStatus.SC_OK);
+		give().header(tokenHeader, validToken).when().delete("/files/trash").then().statusCode(HttpStatus.SC_OK);
 	}
-	
-	@Before
+
+	// @Before
 	public void createTestData() {
 		createTestFileData();
-		
+
 		PermissionCreateRequestbody bodyData = new PermissionCreateRequestbody();
 		bodyData.setAllowFileDiscovery(false);
 		bodyData.setDomain("domain");
@@ -49,31 +53,34 @@ public class PermissionsControllerTest extends AbstractControllerTest {
 		bodyData.setRole("testRole");
 		bodyData.setType("testType");
 
-		given().pathParam("fileId", existedFileId).contentType(MediaType.APPLICATION_JSON_VALUE).body(bodyData).when()
-				.post("/files/{fileId}/permissions").then().statusCode(HttpStatus.SC_OK)
-				.body("message", equalTo("sharing success"), "code", equalTo("success"));		
+		give().header(tokenHeader, validToken).pathParam("fileId", existedFileId)
+				.contentType(MediaType.APPLICATION_JSON_VALUE).body(bodyData).when().post("/files/{fileId}/permissions")
+				.then().statusCode(HttpStatus.SC_OK)
+				.body("message", equalTo("sharing success"), "code", equalTo("success"));
 
+		give().header(tokenHeader, validToken).pathParam("fileId", deletedFileID)
+				.contentType(MediaType.APPLICATION_JSON_VALUE).body(bodyData).when().post("/files/{fileId}/permissions")
+				.then().statusCode(HttpStatus.SC_OK)
+				.body("message", equalTo("sharing success"), "code", equalTo("success"));
 
-		given().pathParam("fileId", deletedFileID).contentType(MediaType.APPLICATION_JSON_VALUE).body(bodyData).when()
-				.post("/files/{fileId}/permissions").then().statusCode(HttpStatus.SC_OK)
-				.body("message", equalTo("sharing success"), "code", equalTo("success"));		
-		
 	}
-	
-	@After
-	public void deleteTestData() {		
-		given().pathParam("fileId", existedFileId).pathParam("permissionId", existedPermissionId)
-		.param("supportsTeamDrives", notSupportTeamDrives).when()
-		.delete("/files/{fileId}/permissions/{permissionId}").then().contentType(JSON).statusCode(HttpStatus.SC_OK);
-		given().pathParam("fileId", deletedFileID).pathParam("permissionId", deletedPermissionId)
-		.param("supportsTeamDrives", notSupportTeamDrives).when()
-		.delete("/files/{fileId}/permissions/{permissionId}").then().contentType(JSON).statusCode(HttpStatus.SC_OK);
-		
+
+	// @After
+	public void deleteTestData() {
+		give().header(tokenHeader, validToken).pathParam("fileId", existedFileId)
+				.pathParam("permissionId", existedPermissionId).param("supportsTeamDrives", notSupportTeamDrives).when()
+				.delete("/files/{fileId}/permissions/{permissionId}").then().contentType(JSON)
+				.statusCode(HttpStatus.SC_OK);
+		give().header(tokenHeader, validToken).pathParam("fileId", deletedFileID)
+				.pathParam("permissionId", deletedPermissionId).param("supportsTeamDrives", notSupportTeamDrives).when()
+				.delete("/files/{fileId}/permissions/{permissionId}").then().contentType(JSON)
+				.statusCode(HttpStatus.SC_OK);
+
 		deleteTestFileData();
 	}
-	
+
 	@Test
-	public void createExistedPermissionReturnError() {
+	public void createExistedPermissionReturnOK() {
 		PermissionCreateRequestbody bodyData = new PermissionCreateRequestbody();
 		bodyData.setAllowFileDiscovery(false);
 		bodyData.setDomain("domain");
@@ -81,8 +88,9 @@ public class PermissionsControllerTest extends AbstractControllerTest {
 		bodyData.setRole("testRole");
 		bodyData.setType("testType");
 
-		given().pathParam("fileId", existedFileId).contentType(MediaType.APPLICATION_JSON_VALUE).body(bodyData).when()
-				.post("/files/{fileId}/permissions").then().statusCode(HttpStatus.SC_OK)
+		give().header(tokenHeader, validToken).pathParam("fileId", existedFileId)
+				.contentType(MediaType.APPLICATION_JSON_VALUE).body(bodyData).when().post("/files/{fileId}/permissions")
+				.then().statusCode(HttpStatus.SC_OK)
 				.body("message", equalTo("sharing success"), "code", equalTo("success"));
 	}
 
@@ -95,52 +103,59 @@ public class PermissionsControllerTest extends AbstractControllerTest {
 		bodyData.setRole("testRole");
 		bodyData.setType("testType");
 
-		given().pathParam("fileId", nonexistedFileId).contentType(MediaType.APPLICATION_JSON_VALUE).body(bodyData).when()
-				.post("/files/{fileId}/permissions").then().statusCode(HttpStatus.SC_OK)
+		give().header(tokenHeader, validToken).pathParam("fileId", nonexistedFileId)
+				.contentType(MediaType.APPLICATION_JSON_VALUE).body(bodyData).when().post("/files/{fileId}/permissions")
+				.then().statusCode(HttpStatus.SC_BAD_REQUEST)
 				.body("message", equalTo("file not found or check failed"), "code", equalTo("error"));
 	}
 
 	@Test
 	public void deleteExistedPermissionReturnOK() {
-		given().pathParam("fileId", existedFileId).pathParam("permissionId", existedPermissionId)
-				.param("supportsTeamDrives", notSupportTeamDrives).when()
-				.delete("/files/{fileId}/permissions/{permissionId}").then().contentType(JSON).statusCode(HttpStatus.SC_OK)
-				.body("message", containsString("permissionId Not found"));
-//				.body("message", containsString("delete execute success"));
+		give().header(tokenHeader, validToken).pathParam("fileId", existedFileId)
+				.pathParam("permissionId", existedPermissionId).param("supportsTeamDrives", notSupportTeamDrives).when()
+				.delete("/files/{fileId}/permissions/{permissionId}").then().contentType(JSON)
+				.statusCode(HttpStatus.SC_BAD_REQUEST).body("message", containsString("permission Not found"));
+		// .body("message", containsString("delete execute success"));
 	}
 
 	@Test
 	public void deleteNonexistedPermissionReturnError() {
-		given().pathParam("fileId", nonexistedFileId).pathParam("permissionId", nonexistedPermissionId)
-				.param("supportsTeamDrives", notSupportTeamDrives).when()
-				.delete("/files/{fileId}/permissions/{permissionId}").then().contentType(JSON).statusCode(HttpStatus.SC_OK)
+		give().header(tokenHeader, validToken).pathParam("fileId", nonexistedFileId)
+				.pathParam("permissionId", nonexistedPermissionId).param("supportsTeamDrives", notSupportTeamDrives)
+				.when().delete("/files/{fileId}/permissions/{permissionId}").then().contentType(JSON)
+				.statusCode(HttpStatus.SC_BAD_REQUEST)
 				.body("message", containsString("file not found or check failed"), "code", equalTo("error"));
 	}
 
 	@Test
 	public void getExistedPermissionReturnOK() {
-		given().pathParam("fileId", existedFileId).pathParam("permissionId", existedPermissionId)
-				.param("supportsTeamDrives", notSupportTeamDrives).when()
-				.get("/files/{fileId}/permissions/{permissionId}").then().statusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR).body("error", notNullValue());
+		give().header(tokenHeader, validToken).pathParam("fileId", existedFileId)
+				.pathParam("permissionId", existedPermissionId).param("supportsTeamDrives", notSupportTeamDrives).when()
+				.get("/files/{fileId}/permissions/{permissionId}").then()
+				.statusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR)
+				.body("message", containsString("file not found or check failed"), "error", notNullValue());
 	}
 
 	@Test
 	public void getNonexistedPermissionReturnError() {
-		given().pathParam("fileId", nonexistedFileId).pathParam("permissionId", nonexistedPermissionId)
-				.param("supportsTeamDrives", notSupportTeamDrives).when()
-				.get("/files/{fileId}/permissions/{permissionId}").then().statusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR).body("error", notNullValue());
+		give().header(tokenHeader, validToken).pathParam("fileId", nonexistedFileId)
+				.pathParam("permissionId", nonexistedPermissionId).param("supportsTeamDrives", notSupportTeamDrives)
+				.when().get("/files/{fileId}/permissions/{permissionId}").then().statusCode(HttpStatus.SC_BAD_REQUEST)
+				.body("message", containsString("file not found or check failed"), "error", notNullValue());
 	}
 
 	@Test
 	public void listExistedPermissionsReturnOK() {
-		given().pathParam("fileId", existedFileId).when().get("/files/{fileId}/permissions").then().statusCode(HttpStatus.SC_OK)
-				.body("error", notNullValue());
+		give().header(tokenHeader, validToken).pathParam("fileId", existedFileId).when()
+				.get("/files/{fileId}/permissions").then().statusCode(HttpStatus.SC_BAD_REQUEST)
+				.body("message", containsString("file not found or check failed"), "error", notNullValue());
 	}
 
 	@Test
 	public void listNonexistedPermissionsReturnError() {
-		given().pathParam("fileId", nonexistedFileId).when().get("/files/{fileId}/permissions").then().statusCode(HttpStatus.SC_OK)
-				.body(equalTo(""));
+		give().header(tokenHeader, validToken).pathParam("fileId", nonexistedFileId).when()
+				.get("/files/{fileId}/permissions").then().statusCode(HttpStatus.SC_BAD_REQUEST)
+				.body("message", containsString("file not found or check failed"), "error", notNullValue());
 	}
 
 	@Test
@@ -148,10 +163,13 @@ public class PermissionsControllerTest extends AbstractControllerTest {
 		PermissionUpdateRequestbody bodyData = new PermissionUpdateRequestbody();
 		bodyData.setExpirationTime("expirationTime");
 		bodyData.setRole("testRole");
-		given().pathParam("fileId", existedFileId).pathParam("permissionId", existedPermissionId)
-				.contentType(MediaType.APPLICATION_JSON_VALUE).body(bodyData).when()
-				.patch("/files/{fileId}/permissions/{permissionId}").then().statusCode(HttpStatus.SC_OK)
-				.body("message", containsString("update execute success"), "code", equalTo("success"));
+		give().header(tokenHeader, validToken).pathParam("fileId", existedFileId)
+				.pathParam("permissionId", existedPermissionId).contentType(MediaType.APPLICATION_JSON_VALUE)
+				.body(bodyData).when().patch("/files/{fileId}/permissions/{permissionId}").then()
+				.statusCode(HttpStatus.SC_BAD_REQUEST)
+				// .body("message", containsString("update execute success"),
+				// "code", equalTo("success"));
+				.body("message", containsString("update execute failed"), "code", equalTo("error"));
 	}
 
 	@Test
@@ -159,9 +177,10 @@ public class PermissionsControllerTest extends AbstractControllerTest {
 		PermissionUpdateRequestbody bodyData = new PermissionUpdateRequestbody();
 		bodyData.setExpirationTime("expirationTime");
 		bodyData.setRole("testRole");
-		given().pathParam("fileId", nonexistedFileId).pathParam("permissionId", nonexistedPermissionId)
-				.contentType(MediaType.APPLICATION_JSON_VALUE).body(bodyData).when()
-				.patch("/files/{fileId}/permissions/{permissionId}").then().statusCode(HttpStatus.SC_OK)
-				.body("message", equalTo("file not found or file is locked"), "code", equalTo("error"));
+		give().header(tokenHeader, validToken).pathParam("fileId", nonexistedFileId)
+				.pathParam("permissionId", nonexistedPermissionId).contentType(MediaType.APPLICATION_JSON_VALUE)
+				.body(bodyData).when().patch("/files/{fileId}/permissions/{permissionId}").then()
+				.statusCode(HttpStatus.SC_BAD_REQUEST)
+				.body("message", equalTo("file not found or check failed"), "code", equalTo("error"));
 	}
 }

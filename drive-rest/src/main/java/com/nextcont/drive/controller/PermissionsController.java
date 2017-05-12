@@ -55,7 +55,7 @@ public class PermissionsController {
     private IdGenService idGenService;
 
 
-    @RequestMapping(value = "/{fileId}/permissions", method = RequestMethod.POST, produces = "application/json")
+    @PostMapping(value = "/{fileId}/permissions", produces = "application/json")
     public ResponseEntity<Object> create(@PathVariable("fileId") String fileId, PermissionCreateRequest request, @RequestBody PermissionCreateRequestbody bodyData){
 
         Tuple<Object,HttpStatus> result  = fileMetaDataService
@@ -104,7 +104,7 @@ public class PermissionsController {
     }
 
 
-    @RequestMapping(value = "/{fileId}/permissions/{permissionId}", method = RequestMethod.DELETE, produces = "application/json")
+    @DeleteMapping(value = "/{fileId}/permissions/{permissionId}", produces = "application/json")
     public ResponseEntity<Object> delete(@PathVariable("fileId") String fileId,@PathVariable String permissionId, @RequestParam boolean supportsTeamDrives){
 
         Tuple<Object,HttpStatus> result = fileMetaDataService
@@ -125,7 +125,7 @@ public class PermissionsController {
         return new ResponseEntity<>(result.v1(),result.v2());
     }
 
-    @RequestMapping(value = "/{fileId}/permissions/{permissionId}", method = RequestMethod.GET, produces = "application/json")
+    @GetMapping(value = "/{fileId}/permissions/{permissionId}", produces = "application/json")
     public ResponseEntity<Object> get(@PathVariable("fileId") String fileId,@PathVariable String permissionId, @RequestParam boolean supportsTeamDrives){
         MongoInnerDomQuery.MongoInnerDomQueryBuilder builder = MongoInnerDomQuery.builder();
         MongoInnerDomQuery query = builder
@@ -139,7 +139,7 @@ public class PermissionsController {
         return new ResponseEntity<>(permissions,HttpStatus.OK);
     }
 
-    @RequestMapping(value = "/{fileId}/permissions", method = RequestMethod.GET, produces = "application/json")
+    @GetMapping(value = "/{fileId}/permissions",produces = "application/json")
     public ResponseEntity<?> list(@PathVariable("fileId") String fileId, PermissionListRequest request){
         List<FilePermission> permissions = fileMetaDataService
                 .queryOneFullField(new Document("id",fileId))
@@ -148,11 +148,10 @@ public class PermissionsController {
     }
 
 
-    @RequestMapping(value = "/{fileId}/permissions/{permissionId}", method = RequestMethod.PATCH, produces = "application/json")
+    @PatchMapping(value = "/{fileId}/permissions/{permissionId}", produces = "application/json")
     public ResponseEntity<Object> update(@PathVariable("fileId") String fileId, @PathVariable String permissionId, PermissionUpdateRequest request, @RequestBody PermissionUpdateRequestbody bodyData){
         Tuple<Object,HttpStatus> result = fileMetaDataService
-                .queryOneFullField(new Document("owners.emailAddress", "jnercywang@gmail.com").append("id",fileId)
-                        .append("locked", false))
+                .queryOneFullField(new Document("owners.emailAddress", "jnercywang@gmail.com").append("id",fileId).append("locked", false))
                 .map(driveFile -> {
                             List<FilePermission> permissions = driveFile.getPermissions();
                             permissions.forEach(p->{

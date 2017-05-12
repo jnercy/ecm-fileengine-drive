@@ -1,5 +1,6 @@
 package com.nextcont.drive.service;
 
+import com.nextcont.drive.aspect.AuthAspect;
 import com.nextcont.drive.jooq.bean.TransitionUnAggregationData;
 import com.nextcont.drive.utils.BeanUtil;
 import com.nextcont.file.*;
@@ -24,8 +25,6 @@ public class FileMetadataMaker {
 
     private final static long INITIALVERSION = 1L;
 
-    private final static String TEST_USERID = "jnercywang@gmail.com";
-
     private final static String FOLDER_MIMETYPE = "application/vnd.google-apps.folder";
 
     private static String nowTime;
@@ -33,13 +32,15 @@ public class FileMetadataMaker {
 
     public static Document makeMetaData(TransitionUnAggregationData data) {
 
+        TokenInfo tokenInfo = AuthAspect.getAuthTokenInfo();
+
         nowTime = new DateTime().toString("yyyy-MM-dd");
 
-        List<FileProcessRecord> userRecords = buildUserRecords();
+        List<FileProcessRecord> userRecords = buildUserRecords(tokenInfo);
 
-        List<DriveUser> owners = buildOwner(data);
+        List<DriveUser> owners = buildOwner(data,tokenInfo);
 
-        List<FilePermission> permissions = buildFilePermission(data);
+        List<FilePermission> permissions = buildFilePermission(data,tokenInfo);
 
         Capability capability = buildCapability(data.getMimeType());
 
@@ -53,7 +54,7 @@ public class FileMetadataMaker {
                 .starred(false)
                 .trashed(false)
                 .explicitlyTrashed(false)
-                .parents(Arrays.asList("drive"))
+                .parents(Arrays.asList(AuthAspect.getAuthTokenInfo().getRootid()))
                 .version(INITIALVERSION)
                 .webViewLink(data.getWebContentLink())
                 .iconLink("https://drive-thirdparty.googleusercontent.com/16/type/image/jpeg")
@@ -77,6 +78,7 @@ public class FileMetadataMaker {
                 .md5Checksum("default")
                 .headRevisionId("default")
                 .userRecords(userRecords)
+                .ownedByMe(true)
                 .build();
 
         Document resultDocument = BeanUtil.toBson(fileAgg);
@@ -95,12 +97,12 @@ public class FileMetadataMaker {
     }
 
 
-    private static List<FileProcessRecord> buildUserRecords() {
+    private static List<FileProcessRecord> buildUserRecords(TokenInfo tokenInfo) {
 
         FileProcessRecord.FileProcessRecordBuilder recordBuilder = FileProcessRecord.builder();
 
         return Collections.singletonList(recordBuilder
-                .userId(TEST_USERID)
+                .userId(tokenInfo.getGmail())
                 .ownedByMe(true)
                 .modifyByMe(true)
                 .modifyByMeTime(nowTime)
@@ -118,13 +120,13 @@ public class FileMetadataMaker {
             return Capability.getInstance();
     }
 
-    private static List<DriveUser> buildOwner(TransitionUnAggregationData data) {
+    private static List<DriveUser> buildOwner(TransitionUnAggregationData data,TokenInfo tokenInfo) {
         DriveUser.DriveUserBuilder ownersBuilder = DriveUser.builder();
         DriveUser owners = ownersBuilder
-                .displayName(TEST_USERID)
+                .displayName(tokenInfo.getGmail())
                 .photoLink("https://lh4.googleusercontent.com/-QL4nj5VHT7E/AAAAAAAAAAI/AAAAAAAAAAo/vP5Ue1hGfpw/s64/photo.jpg")
                 .permissionId(data.getPermissionGenId())
-                .emailAddress(TEST_USERID)
+                .emailAddress(tokenInfo.getGmail())
                 .build();
         List<DriveUser> ownersArrayList = new ArrayList<>();
         ownersArrayList.add(owners);
@@ -132,15 +134,15 @@ public class FileMetadataMaker {
         return ownersArrayList;
     }
 
-    private static List<FilePermission> buildFilePermission(TransitionUnAggregationData data) {
+    private static List<FilePermission> buildFilePermission(TransitionUnAggregationData data,TokenInfo tokenInfo) {
 
         FilePermission.FilePermissionBuilder permissionBuilder = FilePermission.builder();
         FilePermission permission = permissionBuilder
                 .id(String.valueOf(data.getPermissionGenId()))
                 .type("user")
-                .emailAdddress(TEST_USERID)
+                .emailAdddress(tokenInfo.getGmail())
                 .role("owner")
-                .displayName(TEST_USERID)
+                .displayName(tokenInfo.getGmail())
                 .photoLink("")
                 .build();
 

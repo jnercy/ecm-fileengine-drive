@@ -15,7 +15,7 @@ import lombok.Data;
 @Data
 public class ExecutionRecord {
 
-    private String domin = "global";
+    private String domain = "global";
 
     private String message;
 

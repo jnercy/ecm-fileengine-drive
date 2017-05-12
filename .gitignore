@@ -3,4 +3,10 @@
 *.*.iml
 **/target
 rebel.xml
-/build
+**/build
+**/bin
+
+**/.gradle/
+**/.classpath
+**/.project
+**/.settings/

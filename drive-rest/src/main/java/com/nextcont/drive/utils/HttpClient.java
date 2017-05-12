@@ -4,6 +4,9 @@ import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
 
 import java.io.IOException;
+import java.util.Map;
+
+import static com.nextcont.drive.utils.TupleFactories.pairs;
 
 /**
  * Created with IntelliJ IDEA.
@@ -22,28 +25,36 @@ public class HttpClient {
 
     public static void httpPostRequest(String url,String json){
 
-        //step 1: 创建一个requestBody对象
         RequestBody requestBody = RequestBody.create(JSON,json);
 
-        //step 3: 创建请求
         Request request = new Request.Builder().url(url)
                 .post(requestBody)
                 .build();
 
-        //step 4： 建立联系 创建Call对象
         okHttpClient.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
-                // TODO: 17-1-4  请求失败
                 e.printStackTrace();
             }
 
             @Override
             public void onResponse(Call call, Response response) throws IOException {
-                // TODO: 17-1-4 请求成功
                 log.info(response.body().string());
             }
         });
+    }
+
+    public static Tuple<Integer,String> httpGetRequest(String url, Map<String,String> parames){
+        Request.Builder builder = new Request.Builder().url(url);
+        parames.forEach(builder::addHeader);
+
+        Request request = builder.build();
+        try{
+            Response response = okHttpClient.newCall(request).execute();
+            return pairs(response.code(),response.body().string());
+        }catch (IOException e){
+            return pairs(500,e.getMessage());
+        }
     }
 
 }

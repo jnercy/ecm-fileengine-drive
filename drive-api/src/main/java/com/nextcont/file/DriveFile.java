@@ -78,6 +78,8 @@ public class DriveFile implements Serializable{
 
     private boolean shared;
 
+    private boolean ownedByMe;
+
     private Capability capabilities;
 
     private boolean viewersCanCopyContent;

@@ -19,10 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import static com.mongodb.client.model.Updates.*;
 import static com.nextcont.drive.utils.ResponseMaker.getErrorResponse;
@@ -50,9 +47,11 @@ public class DriveUploadController {
     @Autowired
     private BaseMongoService<FileMetaData> fileMetaDataService;
 
+    @Value("${fdfs.intranetIp}")
+    private String dfsIntranetIp;
 
-    @Value("${fdfs.nginxIp}")
-    private String fileOutputIp;
+    @Value("${fdfs.internetIp}")
+    private String dfsInternetIp;
 
     @Value("${fdfs.group}")
     private String groupName;
@@ -61,7 +60,7 @@ public class DriveUploadController {
     private String transitonRequestUrl;
 
 
-    @RequestMapping(value = "/drive/v1/files", method = RequestMethod.POST, produces = "application/json")
+    @PostMapping(value = "/drive/v1/files",produces = "application/json")
     public ResponseEntity<Object> uploadFIle(@RequestParam("file") MultipartFile file, @RequestParam("fileId") String fileId, @RequestParam("uploadType") String uploadType, @RequestParam("path") String path) {
         String name = file.getName();
         StorePath storePath = null;
@@ -80,7 +79,7 @@ public class DriveUploadController {
                 if(storePath !=null){
                     String md5Checksum = DigestUtils.md5Hex(file.getInputStream());
                     Bson updateBson = combine(
-                            set("webContentLink",fileOutputIp + storePath.getFullPath()),
+                            set("webContentLink", dfsInternetIp + storePath.getFullPath()),
                             set("size",file.getSize()),
                             set("quotaBytesUsed",file.getSize()),
                             set("fullFileExtension",extension),
@@ -88,7 +87,7 @@ public class DriveUploadController {
                             set("md5Checksum",md5Checksum));
                     fileMetaDataService.updateOne(new Document("id",fileId),updateBson);
 
-                    String uploadFileUrl = fileOutputIp+storePath.getFullPath();
+                    String uploadFileUrl = dfsInternetIp +storePath.getFullPath();
                     HttpClient.httpPostRequest(transitonRequestUrl,JsonFormat.toJson(TransRequest.getHttpRequest(file.getOriginalFilename(),uploadFileUrl,fileId)));
                     return new ResponseEntity<>(getSuccessResponse(uploadFileUrl), HttpStatus.OK);
                 }

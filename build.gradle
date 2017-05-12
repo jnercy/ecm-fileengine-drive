@@ -1,3 +1,4 @@
+//import org.apache.tools.ant.filters.ReplaceTokens
 
 allprojects {
     apply plugin: 'java'
@@ -6,6 +7,30 @@ allprojects {
     sourceCompatibility = 1.8
     targetCompatibility = 1.8
 }
+
+//ext{
+//    profile = System.getProperty("env", "dev")
+//}
+
+//def loadConfiguration() {
+//    println "==> Load configuration for '" + profile + "'"
+//    def configFile = file('config.groovy') // 配置文件
+//    return new ConfigSlurper(profile).parse(configFile.toURI().toURL()).toProperties()
+//}
+
+
+//def loadGroovyConfig(){
+//    def configFile = file('config.groovy')
+//    new ConfigSlurper(profile).parse(configFile.toURL()).toProperties()
+//}
+//
+//processResources {
+//    from(sourceSets.main.resources.srcDirs) {
+//        filter(org.apache.tools.ant.filters.ReplaceTokens, tokens: loadGroovyConfig())
+//    }
+//}
+
+
 
 subprojects {
     apply plugin: 'maven'
@@ -44,3 +69,5 @@ subprojects {
         )
     }
 }
+
+

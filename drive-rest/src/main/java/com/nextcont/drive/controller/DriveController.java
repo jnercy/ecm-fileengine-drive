@@ -1,6 +1,7 @@
 package com.nextcont.drive.controller;
 
 
+import com.nextcont.drive.aspect.AuthAspect;
 import com.nextcont.drive.jooq.bean.TransitionUnAggregationData;
 import com.nextcont.drive.mongo.MongoQuery;
 import com.nextcont.drive.mongo.service.BaseMongoService;
@@ -12,6 +13,7 @@ import com.nextcont.drive.utils.Tuple;
 import com.nextcont.file.DriveFile;
 import com.nextcont.file.FileList;
 import com.nextcont.file.FileMetaData;
+import com.nextcont.file.TokenInfo;
 import com.nextcont.file.request.file.*;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.Document;
@@ -22,6 +24,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -56,10 +59,7 @@ public class DriveController {
     @Autowired
     private IdGenService idGenService;
 
-
-    private final String DEMO_USER_ID = "jnercywang@gmail.com";
-
-    @RequestMapping(value = "/{fileId}/copy", method = RequestMethod.POST, produces = "application/json")
+    @PostMapping(value = "/{fileId}/copy",produces = "application/json")
     public ResponseEntity<Object> copy(@PathVariable("fileId") String fileId, FileCopyRequest reuqest, @RequestBody FileRequestbody patchData) {
 
         Tuple<Object,HttpStatus> result = fileMetaDataService
@@ -80,7 +80,7 @@ public class DriveController {
 
     }
 
-    @RequestMapping(value = "/create", method = RequestMethod.POST, produces = "application/json")
+    @PostMapping(value = "/create", produces = "application/json")
     public ResponseEntity<Object> create(FileCreateRequest request, @RequestBody FileCreateRequestBody data) {
         TransitionUnAggregationData.TransitionUnAggregationDataBuilder builder = TransitionUnAggregationData.builder();
         TransitionUnAggregationData createFileInfo = builder
@@ -98,7 +98,7 @@ public class DriveController {
         return new ResponseEntity<>(getSuccessResponse("file create success . "),HttpStatus.OK);
     }
 
-    @RequestMapping(value = "/{fileId}", method = RequestMethod.DELETE, produces = "application/json")
+    @DeleteMapping(value = "/{fileId}",produces = "application/json")
     public ResponseEntity<Object> trash(@PathVariable("fileId") String fileId) {
         Bson queryBson = new Document("id",fileId);
         Bson trashBson = set("trashed",true);
@@ -108,43 +108,46 @@ public class DriveController {
         return new ResponseEntity<>(result,HttpStatus.OK);
     }
 
-    @RequestMapping(value = "/trash", method = RequestMethod.DELETE, produces = "application/json")
+    @DeleteMapping(value = "/trash", produces = "application/json")
     public ResponseEntity<Object> emptyTrash() {
         fileMetaDataService
-                .query(new Document("trashed",true).append("owners.emailAddress",DEMO_USER_ID),driveFileExcludeField)
+                .query(new Document("trashed",true),driveFileExcludeField)
                 .forEach(records-> fileMetaDataService.delete(new Document("id",records.getId())));
 
         return new ResponseEntity<>(getSuccessResponse("trash success"),HttpStatus.OK);
     }
 
-    @RequestMapping(value = "/{fileId}/export", method = RequestMethod.GET, produces = "application/json")
+    @GetMapping(value = "/{fileId}/export",  produces = "application/json")
     public String export(@PathVariable("fileId") String fileId, @RequestParam("mimeType") String mimeType) {
         return "";
     }
 
-
-    @RequestMapping(value = "/generateIds", method = RequestMethod.GET)
-    public Long generateIds() {
+    @GetMapping(value = "/generateIds")
+    public Object generateIds(HttpServletRequest request) {
         return idGenService.nextId();
     }
 
+    @GetMapping(value = "/{fileId}",produces = "application/json")
+    public ResponseEntity<Object> get(HttpServletRequest request, @PathVariable("fileId") String fileId) {
 
-    @RequestMapping(value = "/{fileId}", method = RequestMethod.GET, produces = "application/json")
-    public ResponseEntity<Object> get(@PathVariable("fileId") String fileId) {
+        Document queryBson = new Document("parents",AuthAspect.getAuthTokenInfo().getRootid())
+                .append("id",fileId);
         DriveFile result = driveFileService
-                .queryOne(eq("id", fileId), driveFileExcludeField)
+                .queryOne(queryBson, driveFileExcludeField)
                 .orElse(null);
+
         return new ResponseEntity<>(result,HttpStatus.OK);
     }
 
-    @RequestMapping(value = "/list", method = RequestMethod.POST, produces = "application/json")
-    public ResponseEntity<Object> list(FileListRequest request) {
+
+    @GetMapping(value = "/list",produces = "application/json")
+    public ResponseEntity<Object> list(HttpServletRequest request, FileListRequest fileListRequest) {
 
         MongoQuery query = MongoQuery
                 .builder()
-                .queryBson(new Document("parents","drive"))
-                .pageSize(request.getPageSize())
-                .pageToken(request.getPageToken())
+                .queryBson(new Document("parents",AuthAspect.getAuthTokenInfo().getRootid()))
+                .pageSize(fileListRequest.getPageSize())
+                .pageToken(fileListRequest.getPageToken())
                 .projection(driveFileExcludeField)
                 .build();
 
@@ -153,12 +156,12 @@ public class DriveController {
         FileList<DriveFile> result = new FileList<>();
 
         result.setFiles(driveFiles);
-        result.setNextPageToken(request.getPageToken() + 1);
+        result.setNextPageToken(fileListRequest.getPageToken() + 1);
 
         return new ResponseEntity<>(result,HttpStatus.OK);
     }
 
-    @RequestMapping(value = "/lock", method = RequestMethod.POST, produces = "application/json")
+    @PostMapping(value = "/lock",produces = "application/json")
     public ResponseEntity<Object> lock(@RequestBody FileLockRequest request) {
         try {
             Tuple<Object,HttpStatus> result = fileMetaDataService.queryOneFullField(new Document("owners.emailAddress", request.getUserId())
@@ -182,15 +185,15 @@ public class DriveController {
     }
 
 
-    @RequestMapping(value = "/metadata/{fileId}", method = RequestMethod.GET, produces = "application/json")
+    @GetMapping(value = "/metadata/{fileId}",produces = "application/json")
     public ResponseEntity<Object> getMetadata(@PathVariable("fileId") String fileId) {
         log.info("[/{}/metadata][method:{}]", fileId, "get");
         Object result = fileMetaDataService.queryOne(new Document("id", fileId), excludeUsersRecords).orElse(null);
         return result !=null ? new ResponseEntity<>(result,HttpStatus.OK) : new ResponseEntity<>(getErrorResponse("fileId not found."),HttpStatus.BAD_REQUEST);
     }
 
-    @RequestMapping(value = "/metadata/{fileId}", method = RequestMethod.PATCH, produces = "application/json")
-    public ResponseEntity<Object> modifyMetadata(@PathVariable("filed") String fileId, FileMetadataRequest request, @RequestBody FileRequestbody patchData) {
+    @PatchMapping(value = "/metadata/{fileId}",produces = "application/json")
+    public ResponseEntity<Object> modifyMetadata(@PathVariable("fileId") String fileId, FileMetadataRequest request, @RequestBody FileRequestbody patchData) {
         log.info("[/{}/metadata][method:patch]", "");
 
         return fileMetaDataService

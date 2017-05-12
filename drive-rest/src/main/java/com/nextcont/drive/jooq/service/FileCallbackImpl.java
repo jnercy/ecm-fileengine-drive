@@ -70,8 +70,7 @@ public class FileCallbackImpl implements FileCallbackService {
         dsl
                 .select()
                 .from(transition, transitionFile)
-                .where(transition.GLOBALID.equal(transitionFile.GLOBALID)
-                        .and(transition.GLOBALID.in(loopAggregationStatus())))
+                .where(transition.GLOBALID.equal(transitionFile.GLOBALID).and(transition.GLOBALID.in(loopAggregationStatus())))
                 .fetch()
                 .stream()
                 .collect(Collectors.groupingBy(record -> record.get(transition.GLOBALID)))

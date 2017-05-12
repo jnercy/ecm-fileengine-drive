@@ -44,7 +44,7 @@ public class RevisionController {
     private BaseMongoService<FileRevision> fileRevisionService;
 
 
-    @RequestMapping(value = "/{fileId}/revisions/{revisionId}", method = RequestMethod.DELETE, produces = "application/json")
+    @DeleteMapping(value = "/{fileId}/revisions/{revisionId}",produces = "application/json")
     public ResponseEntity<Object> delete(@PathVariable("fileId") String fileId, @PathVariable("revisionId") String revisionId) {
 
         Tuple<Object,HttpStatus> result = fileMetaDataService
@@ -65,7 +65,7 @@ public class RevisionController {
         return new ResponseEntity<>(result.v1(), result.v2());
     }
 
-    @RequestMapping(value = "/{fileId}/revisions/{revisionId}", method = RequestMethod.GET, produces = "application/json")
+    @GetMapping(value = "/{fileId}/revisions/{revisionId}", produces = "application/json")
     public ResponseEntity<Object> get(@PathVariable("fileId") String fileId, @PathVariable("revisionId") String revisionId, @RequestParam boolean acknowledgeAbuse) {
         MongoInnerDomQuery.MongoInnerDomQueryBuilder builder = MongoInnerDomQuery.builder();
         MongoInnerDomQuery query = builder
@@ -80,7 +80,7 @@ public class RevisionController {
         return new ResponseEntity<>(fileRevision,HttpStatus.OK);
     }
 
-    @RequestMapping(value = "/{fileId}/revisions", method = RequestMethod.GET, produces = "application/json")
+    @GetMapping(value = "/{fileId}/revisions", produces = "application/json")
     public ResponseEntity<?> list(@PathVariable("fileId") String fileId, RevisionListRequest request) {
         List<FileRevision> revisions = fileMetaDataService
                 .queryOneFullField(new Document("id", fileId))
@@ -90,7 +90,7 @@ public class RevisionController {
     }
 
 
-    @RequestMapping(value = "/{fileId}/revisions/{revisionId}", method = RequestMethod.PATCH, produces = "application/json")
+    @PatchMapping(value = "/{fileId}/revisions/{revisionId}", produces = "application/json")
     public ResponseEntity<Object> update(@PathVariable("fileId") String fileId, @PathVariable("revisionId") String revisionId, @RequestBody RevisionUpdateReqeustbody bodyData) {
 
         Tuple<Object,HttpStatus> result = fileMetaDataService

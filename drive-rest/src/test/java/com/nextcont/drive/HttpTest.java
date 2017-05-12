@@ -11,6 +11,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 
 /**
@@ -25,7 +27,6 @@ import java.util.concurrent.CountDownLatch;
 @SpringBootTest
 @Slf4j
 public class HttpTest {
-
 
     @Test
     public void testhttp() throws InterruptedException {
