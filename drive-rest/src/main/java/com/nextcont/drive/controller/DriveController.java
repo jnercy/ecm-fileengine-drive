@@ -26,7 +26,9 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Updates.combine;
@@ -142,21 +144,61 @@ public class DriveController {
 
     @GetMapping(value = "/list",produces = "application/json")
     public ResponseEntity<Object> list(HttpServletRequest request, FileListRequest fileListRequest) {
+        Document queryBson = new Document("parents",AuthAspect.getAuthTokenInfo().getRootid());
+
+        Arrays.stream(fileListRequest.getQ().split("and"))
+            .forEach(queryParam->{
+                queryParam = queryParam.trim();
+
+                if(queryParam.contains("trashed")) {
+                    if (queryParam.contains("true"))
+                        queryBson.append("trashed", true);
+                    else
+                        queryBson.append("trashed", false);
+                }
+                else if(queryParam.contains("sharedWithMe")){
+
+                    queryBson.append("permissions.emailAdddress",AuthAspect.getAuthTokenInfo().getGmail());
+
+                    if(queryParam.contains("true"))
+                        queryBson.append("permissions.role",new Document("$ne","owner"));
+                    else if(queryParam.contains("false")){
+                        queryBson.append("permissions.role","owner");
+                    }
+                }
+                else if(queryParam.contains("starred")){
+                    if (queryParam.contains("true"))
+                        queryBson.append("starred", true);
+                    else
+                        queryBson.append("starred", false);
+                }
+                else if(queryParam.contains("ownedByMe")){
+                    if (queryParam.contains("true"))
+                        queryBson.append("ownedByMe", true);
+                    else
+                        queryBson.append("ownedByMe", false);
+                }
+            });
+
+
 
         MongoQuery query = MongoQuery
                 .builder()
-                .queryBson(new Document("parents",AuthAspect.getAuthTokenInfo().getRootid()))
+                .queryBson(queryBson)
                 .pageSize(fileListRequest.getPageSize())
                 .pageToken(fileListRequest.getPageToken())
                 .projection(driveFileExcludeField)
                 .build();
+
+        Long totalCount = driveFileService.count(queryBson);
 
         List<DriveFile> driveFiles = driveFileService.queryFileList(query);
 
         FileList<DriveFile> result = new FileList<>();
 
         result.setFiles(driveFiles);
-        result.setNextPageToken(fileListRequest.getPageToken() + 1);
+
+        result.setNextPageToken(totalCount<fileListRequest.getPageSize()*fileListRequest.getPageToken() ? 0 : fileListRequest.getPageToken() + 1);
 
         return new ResponseEntity<>(result,HttpStatus.OK);
     }

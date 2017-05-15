@@ -63,8 +63,10 @@ public class ParamAspect {
         for (Object arg : args) {
             if (arg instanceof FileListRequest) {
                 FileListRequest request = (FileListRequest) arg;
-//                if(request.getPageSize()<0)
-//                    result = "";
+                if(request.getPageSize()<0 || request.getPageToken()<0)
+                    result = "pageSize or PageToken check abnormal.";
+                if(request.getQ()==null||("").equals(request.getQ()))
+                    request.setQ("trashed=\"false\" and sharedWithMe= \"false\"");
             }
         }
 

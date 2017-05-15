@@ -112,6 +112,10 @@ public abstract class BaseMongoService<T> implements BaseMongoDAO<T>{
         return result;
     }
 
+    @Override
+    public Long count(Bson query) {
+        return mongoCollection.count(query);
+    }
 
     @Override
     public boolean updateOne(Bson query, Bson updates) {

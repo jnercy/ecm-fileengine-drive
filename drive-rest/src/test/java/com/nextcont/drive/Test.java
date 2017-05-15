@@ -26,16 +26,20 @@ public class Test {
     private static String ncat = "";
 
     public static void main(String[] args) {
-        Map<String,String> headerMap = new HashMap<>();
-        headerMap.put("authorization","OAuth "+"gAVmD2R8CeQEf89iRD6p9fIKbSckGNww");
-        Tuple<Integer,String> result = HttpClient.httpGetRequest("https://" + host + "/o/state",headerMap);
+//        Map<String,String> headerMap = new HashMap<>();
+//        headerMap.put("authorization","OAuth "+"gAVmD2R8CeQEf89iRD6p9fIKbSckGNww");
+//        Tuple<Integer,String> result = HttpClient.httpGetRequest("https://" + host + "/o/state",headerMap);
+//
+//        if(result.v1()==200){
+//            TokenInfo tokenInfo = JsonFormat.convert2Object(result.v2(),new TokenInfo()).get();
+//            System.out.println(result.v2());
+//            System.out.println(tokenInfo);
+//        }else{
+//            System.out.println("error");
+//        }
 
-        if(result.v1()==200){
-            TokenInfo tokenInfo = JsonFormat.convert2Object(result.v2(),new TokenInfo()).get();
-            System.out.println(result.v2());
-            System.out.println(tokenInfo);
-        }else{
-            System.out.println("error");
-        }
+        String q = "trashed=\"true\"";
+        if(q.contains("trashed"))
+            System.out.println(q.trim().replace("trashed=",""));
     }
 }

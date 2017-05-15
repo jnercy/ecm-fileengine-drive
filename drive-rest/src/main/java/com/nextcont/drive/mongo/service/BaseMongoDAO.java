@@ -39,5 +39,7 @@ public interface BaseMongoDAO<T>{
 
     boolean delete(Bson query);
 
+    Long count(Bson query);
+
     Optional<T> queryInnerDocument(MongoInnerDomQuery query);
 }

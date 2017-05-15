@@ -17,9 +17,7 @@ import org.springframework.stereotype.Component;
 import javax.servlet.http.HttpServletRequest;
 import java.lang.reflect.Method;
 import java.util.HashMap;
-import java.util.LinkedHashSet;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Created with IntelliJ IDEA.
@@ -76,7 +74,7 @@ public class AuthAspect {
                 result = pjp.proceed();
             } catch (Throwable e) {
                 e.printStackTrace();
-            }
+             }
         } else {
             long beginTime = System.currentTimeMillis();
             MethodSignature signature = (MethodSignature) pjp.getSignature();
