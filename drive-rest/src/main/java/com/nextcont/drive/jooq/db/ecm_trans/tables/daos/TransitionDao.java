@@ -183,4 +183,11 @@ public class TransitionDao extends DAOImpl<TransitionRecord, com.nextcont.drive.
     public List<com.nextcont.drive.jooq.db.ecm_trans.tables.pojos.Transition> fetchByLocation(String... values) {
         return fetch(Transition.TRANSITION.LOCATION, values);
     }
+
+    /**
+     * Fetch records that have <code>iconLink IN (values)</code>
+     */
+    public List<com.nextcont.drive.jooq.db.ecm_trans.tables.pojos.Transition> fetchByIconlink(String... values) {
+        return fetch(Transition.TRANSITION.ICONLINK, values);
+    }
 }

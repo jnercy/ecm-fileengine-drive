@@ -91,6 +91,7 @@ public class FileCallbackImpl implements FileCallbackService {
                                     .createTime(queryRecord.get(transition.CREATEDATE))
                                     .webContentLink(queryRecord.get(transitionFile.URL))
                                     .md5Checksum(queryRecord.get(transition.MD5DIGEST))
+                                    .iconLink(queryRecord.get(transition.ICONLINK))
                                     .previewLink(queryRecord.get(transitionFile.URL));
 
                             Optional.ofNullable(queryRecord.get(transition.FILEEXTENSION))

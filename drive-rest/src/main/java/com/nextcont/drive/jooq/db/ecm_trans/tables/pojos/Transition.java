@@ -23,7 +23,7 @@ import javax.annotation.Generated;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Transition implements Serializable {
 
-    private static final long serialVersionUID = -288218310;
+    private static final long serialVersionUID = -1547315619;
 
     private String    globalid;
     private Timestamp createdate;
@@ -43,6 +43,7 @@ public class Transition implements Serializable {
     private String    websocketsessionid;
     private String    errormsg;
     private String    location;
+    private String    iconlink;
 
     public Transition() {}
 
@@ -65,6 +66,7 @@ public class Transition implements Serializable {
         this.websocketsessionid = value.websocketsessionid;
         this.errormsg = value.errormsg;
         this.location = value.location;
+        this.iconlink = value.iconlink;
     }
 
     public Transition(
@@ -85,7 +87,8 @@ public class Transition implements Serializable {
         String    callbacktype,
         String    websocketsessionid,
         String    errormsg,
-        String    location
+        String    location,
+        String    iconlink
     ) {
         this.globalid = globalid;
         this.createdate = createdate;
@@ -105,6 +108,7 @@ public class Transition implements Serializable {
         this.websocketsessionid = websocketsessionid;
         this.errormsg = errormsg;
         this.location = location;
+        this.iconlink = iconlink;
     }
 
     public String getGlobalid() {
@@ -251,6 +255,14 @@ public class Transition implements Serializable {
         this.location = location;
     }
 
+    public String getIconlink() {
+        return this.iconlink;
+    }
+
+    public void setIconlink(String iconlink) {
+        this.iconlink = iconlink;
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder("Transition (");
@@ -273,6 +285,7 @@ public class Transition implements Serializable {
         sb.append(", ").append(websocketsessionid);
         sb.append(", ").append(errormsg);
         sb.append(", ").append(location);
+        sb.append(", ").append(iconlink);
 
         sb.append(")");
         return sb.toString();

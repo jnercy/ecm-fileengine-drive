@@ -33,7 +33,12 @@ public class MongoManagerService {
     private BaseMongoService<FileMetaData> fileMetaDataService;
 
     public void refreshTransitionInfo(TransitionUnAggregationData data){
-        Bson updateBson = combine(set("webViewLink",data.getPreviewLink()),set("thumbnailLink",data.getThumbnailLink()),set("hasThumbnail",true));
+        Bson updateBson = combine(
+                set("iconLink",data.getIconLink()),
+                set("mimeType",data.getMimeType()),
+                set("webViewLink",data.getPreviewLink()),
+                set("thumbnailLink",data.getThumbnailLink()),
+                set("hasThumbnail",true));
         boolean updateStatus = fileMetaDataService.updateOne(new Document("id",data.getFileId()),updateBson);
         log.info("refreshTransitionInfo: fileId : {} status : {}",data.getFileId(), updateStatus? "success" : "failed");
 

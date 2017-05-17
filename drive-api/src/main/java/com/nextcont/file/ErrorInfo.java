@@ -1,6 +1,9 @@
 package com.nextcont.file;
 
 import lombok.Builder;
+import lombok.Data;
+
+import java.io.Serializable;
 
 /**
  * Created with IntelliJ IDEA.
@@ -10,7 +13,8 @@ import lombok.Builder;
  * To change this template use File | Settings | File Templates.
  */
 @Builder
-public class ErrorInfo {
+@Data
+public class ErrorInfo implements Serializable{
 
     private String domain;
 

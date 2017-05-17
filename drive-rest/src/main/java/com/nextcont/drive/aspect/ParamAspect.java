@@ -30,7 +30,7 @@ import java.util.Map;
 @Component
 @Slf4j
 @Order(5)
-public class ParamAspect {
+public class ParamAspect extends AbstractAspect{
 
 
     /**
@@ -49,6 +49,8 @@ public class ParamAspect {
      */
     @Around("paramCheckPointCut()") //指定拦截器规则；也可以直接把“execution(* com.xjj.........)”写进这里
     public Object Interceptor(ProceedingJoinPoint pjp) {
+
+        long beginTime = System.currentTimeMillis();
 
         Object result = null;
 
@@ -70,13 +72,11 @@ public class ParamAspect {
             }
         }
 
-        try {
-            // 一切正常的情况下，继续执行被拦截的方法
-            if (result == null)
-                result = pjp.proceed();
-        } catch (Throwable e) {
-            log.info("exception: ", e);
-            result = e.getMessage();
+        result = procceed(pjp);
+
+        if (result instanceof String) {
+            long costMs = System.currentTimeMillis() - beginTime;
+            log.info("{}请求结束，耗时：{}ms", "HttpServletRequest", costMs);
         }
         return result;
     }

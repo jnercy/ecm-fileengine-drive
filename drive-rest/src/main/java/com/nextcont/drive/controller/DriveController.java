@@ -13,7 +13,6 @@ import com.nextcont.drive.utils.Tuple;
 import com.nextcont.file.DriveFile;
 import com.nextcont.file.FileList;
 import com.nextcont.file.FileMetaData;
-import com.nextcont.file.TokenInfo;
 import com.nextcont.file.request.file.*;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.Document;
@@ -28,9 +27,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
-import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Updates.combine;
 import static com.mongodb.client.model.Updates.set;
 import static com.nextcont.drive.mongo.MongoField.driveFileExcludeField;
@@ -88,7 +85,7 @@ public class DriveController {
         TransitionUnAggregationData createFileInfo = builder
                 .fileId(data.getId())
                 .fileName(data.getName())
-                .mimeType(data.getMimeType())
+                .mimeType(data.getMimeType()==null ? "" : data.getMimeType())
                 .parents(data.getParents())
                 .permissionGenId(idGenService.nextId())
                 .createTime(DateTime.now().toDate()).build();
@@ -125,12 +122,12 @@ public class DriveController {
     }
 
     @GetMapping(value = "/generateIds")
-    public Object generateIds(HttpServletRequest request) {
+    public Object generateIds() {
         return idGenService.nextId();
     }
 
     @GetMapping(value = "/{fileId}",produces = "application/json")
-    public ResponseEntity<Object> get(HttpServletRequest request, @PathVariable("fileId") String fileId) {
+    public ResponseEntity<Object> get(@PathVariable("fileId") String fileId) {
 
         Document queryBson = new Document("parents",AuthAspect.getAuthTokenInfo().getRootid())
                 .append("id",fileId);

@@ -16,3 +16,24 @@ gradle打包
 clean -Penv=dev
 
 build -x test -Penv=dev
+
+
+
+```
+SELECT
+	*
+FROM
+	transition_file AS a,
+	transition AS b
+WHERE
+	a.globalId = b.globalId
+AND a.globalId IN (
+	SELECT
+		c.globalId
+	FROM
+		transition_callback AS c
+	WHERE
+		c.aggregationStatus = 0 
+)
+
+```

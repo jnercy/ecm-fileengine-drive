@@ -4,18 +4,22 @@ import com.nextcont.drive.utils.HttpClient;
 import com.nextcont.drive.utils.JsonFormat;
 import com.nextcont.drive.utils.Tuple;
 import com.nextcont.file.TokenInfo;
+import com.nextcont.file.response.ErrorResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
-import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.web.context.request.RequestAttributes;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import javax.servlet.http.HttpServletRequest;
-import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -31,7 +35,7 @@ import java.util.Map;
 @Component
 @Slf4j
 @Order(1)
-public class AuthAspect {
+public class AuthAspect extends AbstractAspect{
 
     private static ThreadLocal<TokenInfo> localTokenInfo = new ThreadLocal<>();
 
@@ -50,7 +54,6 @@ public class AuthAspect {
 
     }
 
-
     /**
      * 拦截器具体实现
      *
@@ -59,9 +62,8 @@ public class AuthAspect {
      */
     @Around("controllerMethodPointcut()") //指定拦截器规则；也可以直接把“execution(* com.xjj.........)”写进这里
     public Object Interceptor(ProceedingJoinPoint pjp) {
-
         Object result = null;
-
+        long beginTime = System.currentTimeMillis();
         if (oauthSwitch.equals("close")) {
             try {
                 TokenInfo tokenInfo = new TokenInfo();
@@ -74,51 +76,34 @@ public class AuthAspect {
                 result = pjp.proceed();
             } catch (Throwable e) {
                 e.printStackTrace();
-             }
+            }
         } else {
-            long beginTime = System.currentTimeMillis();
-            MethodSignature signature = (MethodSignature) pjp.getSignature();
-            Method method = signature.getMethod(); //获取被拦截的方法
-            String methodName = method.getName(); //获取被拦截的方法名
+            log.info("获取请求HttpServletRequest.");
+            RequestAttributes ra = RequestContextHolder.getRequestAttributes();
+            ServletRequestAttributes sra = (ServletRequestAttributes) ra;
+            HttpServletRequest request = sra.getRequest();
+            Map<String, String> headerMap = new HashMap<>();
+            headerMap.put("authorization", "OAuth " + request.getHeader("token"));
+            Tuple<Integer, String> authInfo = HttpClient.httpGetRequest("https://" + host + "/o/state", headerMap);
 
-            log.info("请求开始，方法：{}", methodName);
-
-            Object[] args = pjp.getArgs();
-            for (Object arg : args) {
-                if (arg instanceof HttpServletRequest) {
-                    HttpServletRequest request = (HttpServletRequest) arg;
-                    Map<String, String> headerMap = new HashMap<>();
-                    headerMap.put("authorization", "OAuth " + request.getHeader("token"));
-                    Tuple<Integer, String> authInfo = HttpClient.httpGetRequest("https://" + host + "/o/state", headerMap);
-
-                    if (authInfo.v1() == 200) {
-                        TokenInfo tokenInfo = JsonFormat.convert2Object(authInfo.v2(), new TokenInfo()).get();
-                        localTokenInfo.set(tokenInfo);
-                    } else {
-                        result = authInfo.v2();
-                    }
-                }
-            }
-
-            try {
-                // 一切正常的情况下，继续执行被拦截的方法
-                if (result == null)
-                    result = pjp.proceed();
-            } catch (Throwable e) {
-                log.info("exception: ", e);
-                result = e.getMessage();
-            }
-
-            if (result instanceof String) {
-                long costMs = System.currentTimeMillis() - beginTime;
-                log.info("{}请求结束，耗时：{}ms", methodName, costMs);
-            }
-        }
-            return result;
+            if (authInfo.v1() == 200) {
+                TokenInfo tokenInfo = JsonFormat.convert2Object(authInfo.v2(), new TokenInfo()).get();
+                localTokenInfo.set(tokenInfo);
+                result = procceed(pjp);
+            } else
+                result = authInfo.v2();
         }
 
-
-        public  static TokenInfo getAuthTokenInfo(){
-            return localTokenInfo.get();
+        if (result instanceof String) {
+            long costMs = System.currentTimeMillis() - beginTime;
+            log.info("{}请求结束，耗时：{}ms", "HttpServletRequest", costMs);
+            result = new ResponseEntity<>(ErrorResponse.createErrorResponse(HttpStatus.BAD_REQUEST.value(),result.toString()), HttpStatus.BAD_REQUEST);
         }
+        return result;
+    }
+
+
+    public static TokenInfo getAuthTokenInfo() {
+        return localTokenInfo.get();
+    }
 }

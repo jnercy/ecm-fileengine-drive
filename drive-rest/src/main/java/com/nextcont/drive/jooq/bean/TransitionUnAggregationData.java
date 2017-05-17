@@ -35,6 +35,8 @@ public class TransitionUnAggregationData {
 
     private String md5Checksum;
 
+    private String iconLink;
+
     private String fullFileExtension;
 
     private String fileExtension;

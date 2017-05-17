@@ -1,5 +1,7 @@
 package com.nextcont.drive.controller;
 
+import com.mongodb.client.model.Filters;
+import com.nextcont.drive.aspect.AuthAspect;
 import com.nextcont.drive.mongo.MongoInnerDomQuery;
 import com.nextcont.drive.mongo.service.BaseMongoService;
 import com.nextcont.drive.utils.IdGenService;
@@ -8,6 +10,7 @@ import com.nextcont.drive.utils.Try;
 import com.nextcont.drive.utils.Tuple;
 import com.nextcont.file.*;
 import com.nextcont.file.request.permission.*;
+import jdk.nashorn.internal.parser.Token;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
@@ -21,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Objects;
 
+import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Updates.combine;
 import static com.mongodb.client.model.Updates.inc;
@@ -57,13 +61,25 @@ public class PermissionsController {
 
     @PostMapping(value = "/{fileId}/permissions", produces = "application/json")
     public ResponseEntity<Object> create(@PathVariable("fileId") String fileId, PermissionCreateRequest request, @RequestBody PermissionCreateRequestbody bodyData){
+        TokenInfo tokenInfo = AuthAspect.getAuthTokenInfo();
+
+        Bson queryBson = Filters.or(
+                and(
+                        eq("owners.emailAddress",tokenInfo.getGmail()),
+                        eq("id",fileId),
+                        eq("locked",false)),
+                and(
+                        eq("permissions.emailAddress",tokenInfo.getGmail()),
+                        eq("permissions.role","writer"),
+                        eq("id",fileId),eq("locked",false))
+                );
+
 
         Tuple<Object,HttpStatus> result  = fileMetaDataService
-                .queryOneFullField(new Document("owners.emailAddress", "jnercywang@gmail.com").append("id",fileId).append("locked", false))
+                .queryOneFullField(queryBson)
                 .map(driveFile -> {
                             Try<String> proccessTry = Try.tried(driveFile, file -> {
                                 BsonArray permissionArray = new BsonArray();
-                                BsonArray recordsArray = new BsonArray();
                                 List<FilePermission> permissions = file.getPermissions();
                                 FilePermission permission = FilePermission.builder()
                                         .id(String.valueOf(idGenService.nextId()))
@@ -74,25 +90,11 @@ public class PermissionsController {
                                         .role(bodyData.getRole())
                                         .build();
                                 permissions.add(permission);
-
                                 permissions.forEach(p -> permissionArray.add(BsonDocument.parse(JsonFormat.toJson(p))));
 
-                                List<FileProcessRecord> records = file.getUserRecords();
+                                Bson combineUpdate = combine(set("permissions", permissionArray),inc("version", 1));
 
-                                FileProcessRecord.FileProcessRecordBuilder recordBuilder = FileProcessRecord.builder();
-                                FileProcessRecord processRecord = recordBuilder
-                                        .userId(bodyData.getEmailAddress())
-                                        .ownedByMe(false)
-                                        .modifyByMe(false)
-                                        .starred(false)
-                                        .build();
-                                records.add(processRecord);
-
-                                records.forEach(r -> recordsArray.add(BsonDocument.parse(JsonFormat.toJson(r))));
-                                Bson combineUpdate = combine(set("permissions", permissionArray), set("userRecords", recordsArray), inc("version", 1));
-                                boolean updateResult =
-                                        driveFileService
-                                                .updateOne(new Document("id", fileId), combineUpdate);
+                                boolean updateResult = driveFileService.updateOne(new Document("id", fileId), combineUpdate);
                                 log.info("share update status:{}", updateResult ? "success" : "failed");
                                 return "sharing success";
                             });

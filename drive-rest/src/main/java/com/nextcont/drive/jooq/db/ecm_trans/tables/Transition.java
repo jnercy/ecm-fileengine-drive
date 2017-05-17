@@ -35,7 +35,7 @@ import org.jooq.impl.TableImpl;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Transition extends TableImpl<TransitionRecord> {
 
-    private static final long serialVersionUID = 1264140965;
+    private static final long serialVersionUID = -896617781;
 
     /**
      * The reference instance of <code>ecm_trans.transition</code>
@@ -139,6 +139,11 @@ public class Transition extends TableImpl<TransitionRecord> {
      * The column <code>ecm_trans.transition.location</code>.
      */
     public final TableField<TransitionRecord, String> LOCATION = createField("location", org.jooq.impl.SQLDataType.VARCHAR.length(500), this, "");
+
+    /**
+     * The column <code>ecm_trans.transition.iconLink</code>. 文件图标链接
+     */
+    public final TableField<TransitionRecord, String> ICONLINK = createField("iconLink", org.jooq.impl.SQLDataType.VARCHAR.length(255), this, "文件图标链接");
 
     /**
      * Create a <code>ecm_trans.transition</code> table reference

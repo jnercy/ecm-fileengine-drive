@@ -3,6 +3,7 @@ package com.nextcont.file.response;
 import com.nextcont.file.ErrorInfo;
 import lombok.Data;
 
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.List;
 
@@ -14,7 +15,7 @@ import java.util.List;
  * To change this template use File | Settings | File Templates.
  */
 @Data
-public class ErrorResponse {
+public class ErrorResponse implements Serializable{
 
     private List<ErrorInfo> errors;
 
@@ -24,7 +25,7 @@ public class ErrorResponse {
 
 
 
-    public static ErrorResponse createErrorResponse(Integer errorCode, String reason, String message){
+    public static ErrorResponse createErrorResponse(Integer errorCode,String message){
         ErrorResponse res = new ErrorResponse();
 
         ErrorInfo.ErrorInfoBuilder builder = ErrorInfo.builder();
@@ -32,7 +33,7 @@ public class ErrorResponse {
                 .location("file")
                 .locationType("other")
                 .message(message)
-                .reason(reason);
+                .reason(message);
         res.setErrors(Arrays.asList(builder.build()));
         res.setCode(errorCode);
         res.setMessage(message);

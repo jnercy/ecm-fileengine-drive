@@ -23,7 +23,7 @@ import javax.annotation.Generated;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class TransitionCallback implements Serializable {
 
-    private static final long serialVersionUID = 1793183285;
+    private static final long serialVersionUID = 1090998980;
 
     private String    globalid;
     private String    fileid;
@@ -32,6 +32,7 @@ public class TransitionCallback implements Serializable {
     private String    callbackurl;
     private Timestamp createtime;
     private Byte      aggregationstatus;
+    private String    iconlink;
 
     public TransitionCallback() {}
 
@@ -43,6 +44,7 @@ public class TransitionCallback implements Serializable {
         this.callbackurl = value.callbackurl;
         this.createtime = value.createtime;
         this.aggregationstatus = value.aggregationstatus;
+        this.iconlink = value.iconlink;
     }
 
     public TransitionCallback(
@@ -52,7 +54,8 @@ public class TransitionCallback implements Serializable {
         String    info,
         String    callbackurl,
         Timestamp createtime,
-        Byte      aggregationstatus
+        Byte      aggregationstatus,
+        String    iconlink
     ) {
         this.globalid = globalid;
         this.fileid = fileid;
@@ -61,6 +64,7 @@ public class TransitionCallback implements Serializable {
         this.callbackurl = callbackurl;
         this.createtime = createtime;
         this.aggregationstatus = aggregationstatus;
+        this.iconlink = iconlink;
     }
 
     public String getGlobalid() {
@@ -119,6 +123,14 @@ public class TransitionCallback implements Serializable {
         this.aggregationstatus = aggregationstatus;
     }
 
+    public String getIconlink() {
+        return this.iconlink;
+    }
+
+    public void setIconlink(String iconlink) {
+        this.iconlink = iconlink;
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder("TransitionCallback (");
@@ -130,6 +142,7 @@ public class TransitionCallback implements Serializable {
         sb.append(", ").append(callbackurl);
         sb.append(", ").append(createtime);
         sb.append(", ").append(aggregationstatus);
+        sb.append(", ").append(iconlink);
 
         sb.append(")");
         return sb.toString();

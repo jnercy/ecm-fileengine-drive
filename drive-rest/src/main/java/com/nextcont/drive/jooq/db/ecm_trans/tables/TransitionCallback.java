@@ -31,7 +31,7 @@ import org.jooq.impl.TableImpl;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class TransitionCallback extends TableImpl<TransitionCallbackRecord> {
 
-    private static final long serialVersionUID = -1157132805;
+    private static final long serialVersionUID = -1749297230;
 
     /**
      * The reference instance of <code>ecm_trans.transition_callback</code>
@@ -80,6 +80,11 @@ public class TransitionCallback extends TableImpl<TransitionCallbackRecord> {
      * The column <code>ecm_trans.transition_callback.aggregationStatus</code>. 聚合状态
      */
     public final TableField<TransitionCallbackRecord, Byte> AGGREGATIONSTATUS = createField("aggregationStatus", org.jooq.impl.SQLDataType.TINYINT.nullable(false).defaultValue(org.jooq.impl.DSL.inline("0", org.jooq.impl.SQLDataType.TINYINT)), this, "聚合状态");
+
+    /**
+     * The column <code>ecm_trans.transition_callback.iconLink</code>. 文件图标链接
+     */
+    public final TableField<TransitionCallbackRecord, String> ICONLINK = createField("iconLink", org.jooq.impl.SQLDataType.VARCHAR.length(255), this, "文件图标链接");
 
     /**
      * Create a <code>ecm_trans.transition_callback</code> table reference

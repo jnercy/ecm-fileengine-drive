@@ -34,7 +34,7 @@ public class ScheduledTasks {
     private FileCallbackService fileCallbackService;
 
 
-    @Scheduled(fixedDelay = 1000 * 60)
+    @Scheduled(fixedDelay = 1000 * 10)
     public void generateDataProcess(){
         List<TransitionUnAggregationData>  queryInfo = fileCallbackService.queryTransitionFileInfo();
 
@@ -50,9 +50,9 @@ public class ScheduledTasks {
             fileCallbackService.taskFinishing(finishedIds);
         }
 
-        log.info("Scheduling Tasks Execute finished " +new DateTime().toString("yyyy-MM-dd HH:mm:ss"));
-        log.info("Scheduling Tasks Count: {} " + queryInfo.size());
+        if(queryInfo.size()>0) {
+            log.info("Scheduling Tasks Execute finished " + new DateTime().toString("yyyy-MM-dd HH:mm:ss"));
+            log.info("Scheduling Tasks Count: {} " + queryInfo.size());
+        }
     }
-
-
 }

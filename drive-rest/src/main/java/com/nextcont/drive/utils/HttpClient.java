@@ -23,25 +23,19 @@ public class HttpClient {
     private static OkHttpClient okHttpClient = new OkHttpClient();
 
 
-    public static void httpPostRequest(String url,String json){
+    public static Tuple<Integer,String> httpPostRequest(String url,String json){
 
         RequestBody requestBody = RequestBody.create(JSON,json);
 
         Request request = new Request.Builder().url(url)
                 .post(requestBody)
                 .build();
-
-        okHttpClient.newCall(request).enqueue(new Callback() {
-            @Override
-            public void onFailure(Call call, IOException e) {
-                e.printStackTrace();
-            }
-
-            @Override
-            public void onResponse(Call call, Response response) throws IOException {
-                log.info(response.body().string());
-            }
-        });
+        try{
+            Response response = okHttpClient.newCall(request).execute();
+            return pairs(response.code(),response.body().string());
+        }catch (IOException e){
+            return pairs(500,e.getMessage());
+        }
     }
 
     public static Tuple<Integer,String> httpGetRequest(String url, Map<String,String> parames){

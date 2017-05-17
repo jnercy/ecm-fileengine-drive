@@ -36,8 +36,6 @@ public class FileMetadataMaker {
 
         nowTime = new DateTime().toString("yyyy-MM-dd");
 
-        List<FileProcessRecord> userRecords = buildUserRecords(tokenInfo);
-
         List<DriveUser> owners = buildOwner(data,tokenInfo);
 
         List<FilePermission> permissions = buildFilePermission(data,tokenInfo);
@@ -57,7 +55,6 @@ public class FileMetadataMaker {
                 .parents(Arrays.asList(AuthAspect.getAuthTokenInfo().getRootid()))
                 .version(INITIALVERSION)
                 .webViewLink(data.getWebContentLink())
-                .iconLink("https://drive-thirdparty.googleusercontent.com/16/type/image/jpeg")
                 .hasThumbnail(true)
                 .thumbnailVersion(INITIALVERSION)
                 .viewedByMeTime(nowTime)
@@ -67,7 +64,7 @@ public class FileMetadataMaker {
                 .modifiedByMe(true)
                 .owners(owners)
                 .lastModifyUser(owners.get(0))
-                .shared(true)
+                .shared(false)
                 .capabilities(capability)
                 .viewersCanCopyContent(true)
                 .writersCanShare(true)
@@ -77,7 +74,6 @@ public class FileMetadataMaker {
                 .fileExtension(data.getFileExtension())
                 .md5Checksum("default")
                 .headRevisionId("default")
-                .userRecords(userRecords)
                 .ownedByMe(true)
                 .build();
 
@@ -96,23 +92,6 @@ public class FileMetadataMaker {
         return resultDocument;
     }
 
-
-    private static List<FileProcessRecord> buildUserRecords(TokenInfo tokenInfo) {
-
-        FileProcessRecord.FileProcessRecordBuilder recordBuilder = FileProcessRecord.builder();
-
-        return Collections.singletonList(recordBuilder
-                .userId(tokenInfo.getGmail())
-                .ownedByMe(true)
-                .modifyByMe(true)
-                .modifyByMeTime(nowTime)
-                .viewedByMe(false)
-                .viewByMeTime(nowTime)
-                .sharedWithMeTime(nowTime)
-                .starred(false)
-                .build());
-    }
-
     private static Capability buildCapability(String mimeType) {
         if (mimeType.equals(FOLDER_MIMETYPE))
             return FolderCapability.getInstance();
@@ -124,7 +103,7 @@ public class FileMetadataMaker {
         DriveUser.DriveUserBuilder ownersBuilder = DriveUser.builder();
         DriveUser owners = ownersBuilder
                 .displayName(tokenInfo.getGmail())
-                .photoLink("https://lh4.googleusercontent.com/-QL4nj5VHT7E/AAAAAAAAAAI/AAAAAAAAAAo/vP5Ue1hGfpw/s64/photo.jpg")
+                .photoLink(tokenInfo.getPhotoLink())
                 .permissionId(data.getPermissionGenId())
                 .emailAddress(tokenInfo.getGmail())
                 .build();
@@ -143,7 +122,7 @@ public class FileMetadataMaker {
                 .emailAdddress(tokenInfo.getGmail())
                 .role("owner")
                 .displayName(tokenInfo.getGmail())
-                .photoLink("")
+                .photoLink(tokenInfo.getPhotoLink())
                 .build();
 
         return Collections.singletonList(permission);
