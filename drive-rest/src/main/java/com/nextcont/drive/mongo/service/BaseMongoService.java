@@ -5,12 +5,12 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
+import com.nextcont.drive.aspect.AuthAspect;
 import com.nextcont.drive.mongo.MongoClientPool;
 import com.nextcont.drive.mongo.MongoInnerDomQuery;
 import com.nextcont.drive.mongo.MongoQuery;
-import com.nextcont.drive.utils.BeanUtil;
 import com.nextcont.drive.utils.JsonFormat;
-import com.nextcont.drive.utils.ReflectionUtils;
+import com.nextcont.file.UserRecord;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,10 +20,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import static com.mongodb.client.model.Aggregates.*;
 import static com.mongodb.client.model.Projections.*;
+import static com.nextcont.drive.mongo.MongoField.buildSortBson;
+import static com.nextcont.drive.mongo.MongoField.defaultSortBson;
 
 
 /**
@@ -33,7 +34,7 @@ import static com.mongodb.client.model.Projections.*;
  * Time: 17:37
  * To change this template use File | Settings | File Templates.
  */
-public abstract class BaseMongoService<T> implements BaseMongoDAO<T>{
+public abstract class BaseMongoService implements BaseMongoDAO{
 
     @Autowired
     MongoClientPool pool;
@@ -51,64 +52,69 @@ public abstract class BaseMongoService<T> implements BaseMongoDAO<T>{
     }
 
     @Override
-    public void insertMany(List<T> t){
-
-        List<Document> insertData = t
-                .stream()
-                .map(data->Document.parse(JsonFormat.convertJson(data).get()))
-                .collect(Collectors.toList());
-        mongoCollection.insertMany(insertData);
+    public void insertMany(List<Document> t){
+        mongoCollection.insertMany(t);
     }
 
     @Override
-    public Optional<T> queryOne(Bson query, Bson excludeField) {
+    public Optional<Document> queryOne(Bson query, Bson excludeField) {
 
         Document document = mongoCollection
                 .find(query)
                 .projection(excludeField)
                 .first();
-        return document!=null ? Optional.of(BeanUtil.toBean(document,getEntityClass())): Optional.empty();
+
+        return  document ==null ? Optional.empty() : Optional.of(assemblyDocument(document));
     }
 
     @Override
-    public Optional<T> queryOneFullField(Bson query) {
+    public Optional<Document> queryOneFullField(Bson query) {
+
         Document document = mongoCollection
                 .find(query)
                 .first();
-        return document!=null ? Optional.of(BeanUtil.toBean(document,getEntityClass())): Optional.empty();
+
+        return  document ==null ? Optional.empty() : Optional.of(assemblyDocument(document));
+
     }
 
     @Override
-    public List<T> query(Bson query,Bson excludeField){
-        List<T> result = new ArrayList<>();
+    public List<Document> query(Bson query,Bson excludeField){
+        List<Document> result = new ArrayList<>();
 
         mongoCollection
                 .find(query)
                 .projection(excludeField)
-                .forEach((Block<Document>) document -> result.add(BeanUtil.toBean(document,getEntityClass())));
+                .forEach((Block<Document>) document-> result.add(assemblyDocument(document)));
 
         return result;
     }
 
     @Override
-    public List<T> queryFullField(Bson query) {
-        List<T> result = new ArrayList<>();
+    public List<Document> queryFullField(Bson query) {
+        List<Document> result = new ArrayList<>();
 
         mongoCollection
                 .find(query)
-                .forEach((Block<Document>) document -> result.add(BeanUtil.toBean(document,getEntityClass())));
+                .forEach((Block<Document>) document-> result.add(assemblyDocument(document)));
+
         return result;
     }
 
     @Override
-    public List<T> queryFileList(MongoQuery query) {
-        List<T> result = new ArrayList<>();
-        mongoCollection
-                .find(query.getQueryBson())
-                .projection(query.getProjection())
-                .skip((query.getPageToken() - 1) * query.getPageSize())
-                .limit(query.getPageSize())
-                .forEach((Block<Document>) document -> result.add(BeanUtil.toBean(document,getEntityClass())));
+    public List<Document> queryFileList(MongoQuery query) {
+        List<Document> result = new ArrayList<>();
+        try {
+            mongoCollection
+                    .find(query.getQueryBson())
+                    .sort(buildSortBson(query.getOrderBy()))
+                    .projection(query.getProjection())
+                    .skip((query.getPageToken() - 1) * query.getPageSize())
+                    .limit(query.getPageSize())
+                    .forEach((Block<Document>) document -> result.add(assemblyDocument(document)));
+        }catch (Exception e){
+            e.printStackTrace();
+        }
         return result;
     }
 
@@ -136,7 +142,7 @@ public abstract class BaseMongoService<T> implements BaseMongoDAO<T>{
     }
 
     @Override
-    public Optional<T> queryInnerDocument(MongoInnerDomQuery query) {
+    public Optional<Document> queryInnerDocument(MongoInnerDomQuery query) {
         Document result= mongoCollection
                 .aggregate(
                         Arrays.asList(
@@ -150,11 +156,26 @@ public abstract class BaseMongoService<T> implements BaseMongoDAO<T>{
 
         Document innerDoc = result.get( query.getInnerFieldName(),Document.class);
 
-        return JsonFormat.convert2Object(innerDoc.toJson(),getEntityClass());
+        return Optional.of(innerDoc);
     }
 
 
-    public Class<T> getEntityClass(){
-        return ReflectionUtils.getSuperClassGenricType(getClass());
+    @SuppressWarnings("unchecked")
+    public Document assemblyDocument(Document document){
+        List<Document> list = (ArrayList<Document>)document.get("userRecords");
+        list.forEach(userRecord->{
+            if(userRecord.get("rootId").equals(AuthAspect.getAuthTokenInfo().getRootid())){
+                document.put("parents",userRecord.get("parents"));
+                document.put("rootId",userRecord.get("rootId"));
+                document.put("viewedByMeTime",userRecord.get("viewedByMeTime"));
+                document.put("viewedByMe",userRecord.get("viewedByMe"));
+                document.put("modifyByMe",userRecord.get("modifyByMe"));
+                document.put("modifyByMeTime",userRecord.get("modifyByMeTime"));
+                document.put("sharedWithMeTime",userRecord.get("sharedWithMeTime"));
+                document.put("ownedByMe",userRecord.get("ownedByMe"));
+            }
+        });
+        return document;
     }
+
 }

@@ -1,10 +1,7 @@
 package com.nextcont.drive.aspect;
 
-import com.nextcont.drive.utils.HttpClient;
-import com.nextcont.drive.utils.JsonFormat;
-import com.nextcont.drive.utils.Tuple;
-import com.nextcont.file.TokenInfo;
 import com.nextcont.file.request.file.FileListRequest;
+import com.nextcont.file.response.ErrorResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -12,12 +9,11 @@ import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
-import javax.servlet.http.HttpServletRequest;
 import java.lang.reflect.Method;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Created with IntelliJ IDEA.
@@ -59,25 +55,28 @@ public class ParamAspect extends AbstractAspect{
         String methodName = method.getName(); //获取被拦截的方法名
 
 
-        log.info("aop 参数检查，方法：{}", methodName);
+        log.info("aop 参数检查，方法：{}", methodName.trim());
 
         Object[] args = pjp.getArgs();
         for (Object arg : args) {
             if (arg instanceof FileListRequest) {
                 FileListRequest request = (FileListRequest) arg;
-                if(request.getPageSize()<0 || request.getPageToken()<0)
+                if(request.getPageSize()==null || request.getPageToken()==null)
+                    result = "pageSize or PageToken is null.";
+                else if(request.getPageSize()<0 || request.getPageToken()<0)
                     result = "pageSize or PageToken check abnormal.";
                 if(request.getQ()==null||("").equals(request.getQ()))
                     request.setQ("trashed=\"false\" and sharedWithMe= \"false\"");
             }
         }
 
-        result = procceed(pjp);
-
         if (result instanceof String) {
             long costMs = System.currentTimeMillis() - beginTime;
             log.info("{}请求结束，耗时：{}ms", "HttpServletRequest", costMs);
-        }
+            result = new ResponseEntity<>(ErrorResponse.createErrorResponse(HttpStatus.BAD_REQUEST.value(), result.toString()), HttpStatus.BAD_REQUEST);
+        }else
+            result = procceed(pjp);
+
         return result;
     }
 

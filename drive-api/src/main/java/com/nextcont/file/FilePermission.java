@@ -22,12 +22,24 @@ public class FilePermission {
 
     private String type;
 
-    private String emailAdddress;
+    private String emailAddress;
 
     private String role;
 
     private String displayName;
 
     private String photoLink;
+
+
+    public static FilePermission buildFilePermission(Long id, String role, String emailAddress,String type) {
+        return FilePermission.builder()
+                .id(String.valueOf(id))
+                .type(type)
+                .emailAddress(emailAddress)
+                .photoLink("noraml.jpg")
+                .displayName(emailAddress)
+                .role(role)
+                .build();
+    }
 
 }

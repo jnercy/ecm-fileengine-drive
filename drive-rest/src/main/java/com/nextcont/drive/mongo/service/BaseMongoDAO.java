@@ -2,8 +2,6 @@ package com.nextcont.drive.mongo.service;
 
 import com.nextcont.drive.mongo.MongoInnerDomQuery;
 import com.nextcont.drive.mongo.MongoQuery;
-import com.nextcont.file.DriveFile;
-import com.nextcont.file.request.file.FileListRequest;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 
@@ -17,21 +15,21 @@ import java.util.Optional;
  * Time: 11:45
  * To change this template use File | Settings | File Templates.
  */
-public interface BaseMongoDAO<T>{
+public interface BaseMongoDAO{
 
     void insert(Document doc);
 
-    void insertMany(List<T> t);
+    void insertMany(List<Document> t);
 
-    List<T> query(Bson query,Bson excludeField);
+    List<Document> query(Bson query,Bson excludeField);
 
-    List<T> queryFullField(Bson query);
+    List<Document> queryFullField(Bson query);
 
-    List<T> queryFileList(MongoQuery query);
+    List<Document> queryFileList(MongoQuery query);
 
-    Optional<T> queryOne(Bson query, Bson excludeField);
+    Optional<Document> queryOne(Bson query, Bson excludeField);
 
-    Optional<T> queryOneFullField(Bson query);
+    Optional<Document> queryOneFullField(Bson query);
 
     boolean updateOne(Bson query, Bson updates);
 
@@ -41,5 +39,5 @@ public interface BaseMongoDAO<T>{
 
     Long count(Bson query);
 
-    Optional<T> queryInnerDocument(MongoInnerDomQuery query);
+    Optional<Document> queryInnerDocument(MongoInnerDomQuery query);
 }

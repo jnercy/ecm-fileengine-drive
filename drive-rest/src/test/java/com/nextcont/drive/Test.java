@@ -9,7 +9,10 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.concurrent.TimeUnit;
+import java.util.List;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 
 /**
@@ -24,71 +27,62 @@ public class Test {
 
     private final static String domainGenerateIdUrl = "http://139.196.136.113/drive/v1/files/generateIds";
 
-    private final static String domainCreateFileUrl = "http://139.196.136.113/drive/v1/files/create";
-
-    private final static String domainUploadFileUrl = "http://139.196.136.113/upload/drive/v1/files";
+    private final static String domainUploadFileUrl = "http://139.196.136.113/drive/v1/files/upload";
 
     private final static String mimeType = "application/octet-stream";
 
 
-    public static void main(String[] args) {
-        File file = new File("D:\\drive-test-zip");
+    public static void main(String[] args) throws InterruptedException {
+//        File file = new File("C:\\Users\\junxinpc005\\Pictures");
+        File file = new File("/Users/wangxudong/Downloads");
         if (file.exists()) {
-             Arrays.stream(file.listFiles()).forEach(uploadFile->{
-                 String generateId = HttpClient.httpGetRequest(domainGenerateIdUrl,new HashMap<>()).v2();
+            List<File> uploadFiles = Arrays.stream(file.listFiles())
+                    .filter(tempFile->!tempFile.isDirectory())
+                    .collect(Collectors.toList());
 
-                 log.debug(generateId);
 
-                 String createFileJson = "{\n" +
-                         "\t\"mimeType\":\"\",\n" +
-                         "\t\"id\":\"{id}\",\n" +
-                         "\t\"name\" : \"{name}\",\n" +
-                         "\t\"parents\" : [\"0APymvC2SzZuDUk9PVA\"]\n" +
-                         "}";
-                 Tuple<Integer,String> result = HttpClient.httpPostRequest(domainCreateFileUrl,createFileJson.replace("{id}",generateId).replace("{name}",uploadFile.getName()));
-                 log.debug(result.toString());
+            AtomicInteger atomicInteger = new AtomicInteger(uploadFiles.size());
+            ExecutorService executorService = Executors.newFixedThreadPool(8);
 
-                 if(result.v1()==200) {
-                     try {
-                         MultipartBody.Builder builder = new MultipartBody.Builder().setType(MultipartBody.FORM);
-                         builder.addFormDataPart("file", uploadFile.getName(), RequestBody.create(MediaType.parse(mimeType), uploadFile));
-                         builder.addFormDataPart("uploadType", "media");
-                         builder.addFormDataPart("fileId", generateId);
-                         builder.addFormDataPart("path", "");
+            CountDownLatch cdl = new CountDownLatch(atomicInteger.get());
+            uploadFiles.forEach(uploadFile -> {
 
-                         RequestBody requestBody = builder.build();
+                Runnable task = () -> {
+                    String generateId = HttpClient.httpGetRequest(domainGenerateIdUrl, new HashMap<>()).v2();
+                    try {
+                        MultipartBody.Builder builder = new MultipartBody.Builder().setType(MultipartBody.FORM);
+                        builder.addFormDataPart("file", uploadFile.getName(), RequestBody.create(MediaType.parse(mimeType), uploadFile));
+                        builder.addFormDataPart("fileId", generateId);
+                        builder.addFormDataPart("parent", "0APymvC2SzZuDUk9PVA");
 
-                         Request request = new Request.Builder()
-                                 .url(domainUploadFileUrl)
-                                 .post(requestBody)
-                                 .build();
+                        RequestBody requestBody = builder.build();
 
-                         OkHttpClient client = new OkHttpClient.Builder()
-                                 .connectTimeout(30, TimeUnit.SECONDS)
-                                 .readTimeout(30, TimeUnit.SECONDS)
-                                 .writeTimeout(30, TimeUnit.SECONDS)
-                                 .build();
+                        Request request = new Request.Builder()
+                                .url(domainUploadFileUrl)
+                                .post(requestBody)
+                                .build();
 
-                         client.newCall(request).enqueue(new okhttp3.Callback(){
-                               @Override
-                               public void onFailure(Call call, IOException e) {
-                                   e.printStackTrace();
-                               }
+                        OkHttpClient client = new OkHttpClient.Builder()
+                                .connectTimeout(300, TimeUnit.SECONDS)
+                                .readTimeout(300, TimeUnit.SECONDS)
+                                .writeTimeout(300, TimeUnit.SECONDS)
+                                .retryOnConnectionFailure(true)
+                                .build();
 
-                               @Override
-                               public void onResponse(Call call, okhttp3.Response response) throws IOException {
-                                   log.debug(response.body().string());
-                               }
-                           });
+                        Response response = client.newCall(request).execute();
+                        log.debug(response.body().string());
+                        cdl.countDown();
+                        log.info("file upload success , unfinished task count=>{}",atomicInteger.addAndGet(-1));
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                };
 
-                     }catch (Exception e){
-                         e.printStackTrace();
-                     }
-                 }
-                 else
-                     log.error(result.v2());
-             });
+                executorService.execute(task);
+            });
 
+            cdl.await();
+            System.out.println("test over");
         }
     }
 }

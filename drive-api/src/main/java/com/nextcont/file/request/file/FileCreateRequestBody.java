@@ -36,7 +36,7 @@ public class FileCreateRequestBody {
 
     private String originalFilename;
 
-    private List<String> parents;
+    private String parent;
 
     private Map properties;
 

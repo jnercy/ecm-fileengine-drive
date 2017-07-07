@@ -12,6 +12,8 @@ import lombok.Data;
 @Data
 public class PermissionCreateRequestbody {
 
+    private String fileId;
+
     private String role;
 
     private String type;

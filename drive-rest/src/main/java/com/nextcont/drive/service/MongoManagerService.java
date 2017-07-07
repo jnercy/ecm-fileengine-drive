@@ -2,21 +2,14 @@ package com.nextcont.drive.service;
 
 import com.nextcont.drive.jooq.bean.TransitionUnAggregationData;
 import com.nextcont.drive.mongo.service.BaseMongoService;
-import com.nextcont.drive.utils.JsonFormat;
-import com.nextcont.file.*;
-import com.nextcont.file.folder.FolderCapability;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.Document;
 import org.bson.conversions.Bson;
-import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
-import static com.mongodb.client.model.Updates.*;
+import static com.mongodb.client.model.Updates.combine;
+import static com.mongodb.client.model.Updates.set;
 
 /**
  * Created with IntelliJ IDEA.
@@ -30,7 +23,7 @@ import static com.mongodb.client.model.Updates.*;
 public class MongoManagerService {
 
     @Autowired
-    private BaseMongoService<FileMetaData> fileMetaDataService;
+    private BaseMongoService fileMetaDataService;
 
     public void refreshTransitionInfo(TransitionUnAggregationData data){
         Bson updateBson = combine(

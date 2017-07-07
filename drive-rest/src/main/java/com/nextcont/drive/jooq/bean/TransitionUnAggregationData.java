@@ -41,7 +41,7 @@ public class TransitionUnAggregationData {
 
     private String fileExtension;
 
-    private List<String> parents;
+    private String parent;
 
     private long permissionGenId;
 }

@@ -5,13 +5,17 @@ package com.nextcont.drive.jooq.db;
 
 
 import com.nextcont.drive.jooq.db.ecm_trans.EcmTrans;
-import org.jooq.Schema;
-import org.jooq.impl.CatalogImpl;
+import com.nextcont.drive.jooq.db.information_schema.InformationSchema;
+import com.nextcont.drive.jooq.db.mysql.Mysql;
 
-import javax.annotation.Generated;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import javax.annotation.Generated;
+
+import org.jooq.Schema;
+import org.jooq.impl.CatalogImpl;
 
 
 /**
@@ -35,9 +39,19 @@ public class DefaultCatalog extends CatalogImpl {
     public static final DefaultCatalog DEFAULT_CATALOG = new DefaultCatalog();
 
     /**
+     * The schema <code>information_schema</code>.
+     */
+    public final InformationSchema INFORMATION_SCHEMA = com.nextcont.drive.jooq.db.information_schema.InformationSchema.INFORMATION_SCHEMA;
+
+    /**
      * The schema <code>ecm_trans</code>.
      */
     public final EcmTrans ECM_TRANS = com.nextcont.drive.jooq.db.ecm_trans.EcmTrans.ECM_TRANS;
+
+    /**
+     * The schema <code>mysql</code>.
+     */
+    public final Mysql MYSQL = com.nextcont.drive.jooq.db.mysql.Mysql.MYSQL;
 
     /**
      * No further instances allowed
@@ -54,6 +68,9 @@ public class DefaultCatalog extends CatalogImpl {
     }
 
     private final List<Schema> getSchemas0() {
-        return Arrays.<Schema>asList(EcmTrans.ECM_TRANS);
+        return Arrays.<Schema>asList(
+            InformationSchema.INFORMATION_SCHEMA,
+            EcmTrans.ECM_TRANS,
+            Mysql.MYSQL);
     }
 }

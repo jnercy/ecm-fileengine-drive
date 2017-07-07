@@ -40,7 +40,9 @@ public class HttpClient {
 
     public static Tuple<Integer,String> httpGetRequest(String url, Map<String,String> parames){
         Request.Builder builder = new Request.Builder().url(url);
-        parames.forEach(builder::addHeader);
+
+        if(parames!=null)
+            parames.forEach(builder::addHeader);
 
         Request request = builder.build();
         try{

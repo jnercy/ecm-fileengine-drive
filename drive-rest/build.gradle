@@ -10,6 +10,14 @@ buildscript {
         classpath("org.springframework.boot:spring-boot-gradle-plugin:${springbootVersion}")
         classpath("org.jooq:jooq-codegen:3.9.1")
         classpath("mysql:mysql-connector-java:5.1.22")
+        
+        //swagger2markup
+        classpath("org.asciidoctor:asciidoctor-gradle-plugin:1.5.3")
+        classpath("org.asciidoctor:asciidoctorj-pdf:1.5.0-alpha.15")
+        classpath("io.github.swagger2markup:swagger2markup-gradle-plugin:1.3.1")
+        classpath("io.github.swagger2markup:swagger2markup:1.3.1")
+        classpath("io.github.swagger2markup:swagger2markup-import-files-ext:1.3.1")
+        classpath("io.spring.gradle:dependency-management-plugin:0.5.6.RELEASE")
     }
 }
 
@@ -17,6 +25,10 @@ buildscript {
 
 
 apply plugin: 'org.springframework.boot'
+//swagger2markup
+apply plugin: 'org.asciidoctor.convert'
+apply plugin: 'io.github.swagger2markup'
+apply plugin: "io.spring.dependency-management"
 
 jar {
     baseName = 'ecm-drive'
@@ -27,17 +39,85 @@ dependencies {
     compile("org.springframework.boot:spring-boot-starter-web:$springbootVersion")
     compile("org.springframework.boot:spring-boot-starter-jooq:$springbootVersion")
     compile("org.springframework.boot:spring-boot-starter-aop:$springbootVersion")
+    compile("org.springframework.boot:spring-boot-starter-actuator:$springbootVersion")
+    compile("org.springframework.cloud:spring-cloud-starter-eureka-server:1.3.1.RELEASE")
+
+    compile('de.codecentric:spring-boot-admin-starter-client:1.5.0')
+
+
     compile("commons-codec:commons-codec:1.10")
+    compile("org.apache.tika:tika-core:1.14")
 
     compile project(":drive-api")
+
     compile("mysql:mysql-connector-java:5.1.22")
     compile("com.github.tobato:fastdfs-client:1.25.2-RELEASE"){
         exclude group: 'org.mockito', module: 'mockito-all'
         exclude group: 'org.mockito', module: 'mockito-core'
     }
-    compile ("com.squareup.okhttp3:okhttp:3.6.0")
+    compile("com.squareup.okhttp3:okhttp:3.6.0")
     testCompile("org.springframework.boot:spring-boot-starter-test:${springbootVersion}")
-    testCompile("io.rest-assured:rest-assured:3.0.2")
+    testCompile("io.rest-assured:rest-assured:3.0.2")    
+    
+    //web driver
+	testCompile("io.github.bonigarcia:webdrivermanager:1.6.2")
+	testCompile("org.seleniumhq.selenium:selenium-server:3.3.1")
+	
+    //swagger
+    compile("io.springfox:springfox-swagger2:2.6.1")
+    compile("io.springfox:springfox-swagger-ui:2.6.1") 
+    
+    //swagger2markup
+    compile("io.github.swagger2markup:swagger2markup:1.3.1")
+}
+
+/*
+run gradle wrapper --gradle-version 3.0
+or add to build.gradle
+	task wrapper(type: Wrapper) {
+    	gradleVersion = '3.0'
+	}
+run as spring boot app
+http://localhost/swagger-ui.html
+run command "gradlew asciidoctor" in this project root path
+*/
+//swagger2markup
+
+ext {
+    asciiDocOutputDir = file("${buildDir}/asciidoc/generated")
+}
+
+convertSwagger2markup {
+    //swaggerInput "http://139.196.136.113/v2/api-docs"
+    swaggerInput "http://localhost/v2/api-docs"
+    outputDir asciiDocOutputDir            
+	config = [
+			'swagger2markup.markupLanguage' : 'ASCIIDOC',
+			'swagger2markup.pathsGroupedBy' : 'TAGS',
+			'swagger2markup.extensions.dynamicDefinitions.contentPath' : file('asciidoc/extensions/definitions').absolutePath,
+			'swagger2markup.extensions.dynamicOverview.contentPath' : file('asciidoc/extensions/overview').absolutePath,
+			'swagger2markup.extensions.dynamicPaths.contentPath' : file('asciidoc/extensions/paths').absolutePath,
+			'swagger2markup.extensions.dynamicSecurity.contentPath' : file('asciidoc/extensions/security').absolutePath
+			]
+}
+
+asciidoctor {
+    dependsOn convertSwagger2markup
+    sourceDir = file('asciidoc')
+    sources {
+        include 'index.adoc'
+    }
+    backends = ['html5', 'pdf']
+    attributes = [
+            doctype: 'book',
+            toc: 'left',
+            toclevels: '3',
+            numbered: '',
+            sectlinks: '',
+            sectanchors: '',
+            hardbreaks: '',
+            generated: asciiDocOutputDir
+    ]
 }
 
 //processResources {

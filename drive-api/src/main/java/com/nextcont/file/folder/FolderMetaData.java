@@ -115,5 +115,5 @@ public class FolderMetaData {
 
     private boolean isAppAuthorized;
 
-    private List<FileProcessRecord> userRecords;
+    private List<UserRecord> userRecords;
 }

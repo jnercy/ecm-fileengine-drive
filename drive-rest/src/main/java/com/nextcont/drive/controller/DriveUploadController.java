@@ -1,29 +1,28 @@
 package com.nextcont.drive.controller;
 
-import com.github.tobato.fastdfs.domain.StorePath;
-import com.github.tobato.fastdfs.service.AppendFileStorageClient;
-import com.github.tobato.fastdfs.service.FastFileStorageClient;
+import com.nextcont.drive.jooq.bean.TransitionUnAggregationData;
 import com.nextcont.drive.mongo.service.BaseMongoService;
+import com.nextcont.drive.service.FileMetadataMaker;
 import com.nextcont.drive.utils.HttpClient;
+import com.nextcont.drive.utils.IdGenService;
 import com.nextcont.drive.utils.JsonFormat;
-import com.nextcont.drive.utils.StringUtils;
-import com.nextcont.file.FileMetaData;
-import com.nextcont.file.UploadType;
+import com.nextcont.drive.utils.TikaUtils;
+import com.nextcont.file.FileUploadRequest;
 import com.nextcont.file.request.transition.TransRequest;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.bson.Document;
-import org.bson.conversions.Bson;
+import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
-import static com.mongodb.client.model.Updates.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import static com.nextcont.drive.utils.ResponseMaker.getErrorResponse;
-import static com.nextcont.drive.utils.ResponseMaker.getSuccessResponse;
 
 /**
  * Created with IntelliJ IDEA.
@@ -34,18 +33,15 @@ import static com.nextcont.drive.utils.ResponseMaker.getSuccessResponse;
  */
 
 @RestController
-@RequestMapping("/upload")
+@RequestMapping("/drive/v1/files")
 @Slf4j
 public class DriveUploadController {
 
     @Autowired
-    private FastFileStorageClient storageClient;
+    private BaseMongoService driveMongoService;
 
     @Autowired
-    private AppendFileStorageClient appendFileStorageClient;
-
-    @Autowired
-    private BaseMongoService<FileMetaData> fileMetaDataService;
+    private IdGenService idGenService;
 
     @Value("${fdfs.intranetIp}")
     private String dfsIntranetIp;
@@ -59,44 +55,47 @@ public class DriveUploadController {
     @Value("${transition.request}")
     private String transitonRequestUrl;
 
-
-    @PostMapping(value = "/drive/v1/files",produces = "application/json")
-    public ResponseEntity<Object> uploadFIle(@RequestParam("file") MultipartFile file, @RequestParam("fileId") String fileId, @RequestParam("uploadType") String uploadType, @RequestParam("path") String path) {
-        String name = file.getName();
-        StorePath storePath = null;
-        String extension = FilenameUtils.getExtension(file.getOriginalFilename());
-        if (!file.isEmpty()) {
+    @PostMapping(value = "/upload", produces = "application/json")
+    public ResponseEntity<Object> uploadFile(@RequestBody  FileUploadRequest request) {
             try {
-                if (uploadType.equals(UploadType.media.name()))
-                    storePath = storageClient.uploadFile(file.getInputStream(), file.getSize(),extension, null);
+                TransitionUnAggregationData createFileInfo = TransitionUnAggregationData.builder()
+                        .fileId(request.getFileId())
+                        .fileName(request.getFileName())
+                        .mimeType(TikaUtils.getMimeType(request.getFileName()))
+                        .parent(request.getParent())
+                        .permissionGenId(idGenService.nextId())
+                        .createTime(DateTime.now().toDate())
+                        .build();
 
-                else if(uploadType.equals(UploadType.multipart.name())){
-                    if(StringUtils.isNotEmpty(path))
-                        storePath = appendFileStorageClient.uploadAppenderFile(groupName, file.getInputStream(), file.getSize(), FilenameUtils.getExtension(file.getOriginalFilename()));
-                    else
-                        appendFileStorageClient.appendFile(groupName,path,file.getInputStream(),file.getSize());
-                }
-                if(storePath !=null){
-                    String md5Checksum = DigestUtils.md5Hex(file.getInputStream());
-                    Bson updateBson = combine(
-                            set("webContentLink", dfsInternetIp + storePath.getFullPath()),
-                            set("size",file.getSize()),
-                            set("quotaBytesUsed",file.getSize()),
-                            set("fullFileExtension",extension),
-                            set("fileExtension",extension),
-                            set("md5Checksum",md5Checksum));
-                    fileMetaDataService.updateOne(new Document("id",fileId),updateBson);
+                Document createFileDom = combineDocument(createFileInfo,request);
 
-                    String uploadFileUrl = dfsInternetIp +storePath.getFullPath();
-                    HttpClient.httpPostRequest(transitonRequestUrl,JsonFormat.toJson(TransRequest.getHttpRequest(file.getOriginalFilename(),uploadFileUrl,fileId)));
-                    return new ResponseEntity<>(getSuccessResponse(uploadFileUrl), HttpStatus.OK);
-                }
-                else
-                    return new ResponseEntity<>(getErrorResponse("uploadType method not support ."), HttpStatus.BAD_REQUEST);
+                driveMongoService.insert(createFileDom);
+
+                HttpClient.httpPostRequest(transitonRequestUrl, JsonFormat.toJson(TransRequest.getHttpRequest(request.getOriginalFilename(), dfsIntranetIp+"group1/"+request.getUploadFileUrl(), request.getFileId())));
+                return new ResponseEntity<>(createFileDom, HttpStatus.OK);
             } catch (Exception e) {
-                return new ResponseEntity<>(getErrorResponse("You failed to upload " + name + " => " + e.getMessage()), HttpStatus.BAD_REQUEST);
+                e.printStackTrace();
+                return new ResponseEntity<>(getErrorResponse("You failed to upload " + request.getFileName() + " => " + e.getMessage()), HttpStatus.BAD_REQUEST);
             }
-        } else
-            return new ResponseEntity<>(getErrorResponse("You failed to upload " + name + " because the file was empty."), HttpStatus.BAD_REQUEST);
+    }
+
+
+    public Document combineDocument(TransitionUnAggregationData createFileInfo,FileUploadRequest request) {
+        Document createFileDom = FileMetadataMaker.makeMetaData(createFileInfo);
+        try {
+            createFileDom.put("webContentLink", request.getUploadFileUrl());
+            createFileDom.put("size",request.getFileSize());
+            createFileDom.put("mimeType", TikaUtils.getMimeType(request.getOriginalFilename()));
+            createFileDom.put("quotaBytesUsed", request.getFileSize());
+            createFileDom.put("fullFileExtension", FilenameUtils.getExtension(request.getOriginalFilename()));
+            createFileDom.put("fileExtension", FilenameUtils.getExtension(request.getOriginalFilename()));
+            createFileDom.put("md5Checksum", request.getMd5Checksum());
+            return createFileDom;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 }
+
+

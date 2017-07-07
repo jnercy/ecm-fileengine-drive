@@ -1,11 +1,14 @@
 package com.nextcont.drive.utils;
 
+import lombok.Setter;
+
 import java.io.Serializable;
 
 /**
  * 元组
  * Created by wangxudong on 16/2/23.
  */
+@Setter
 public class Tuple<V1,V2> implements Serializable{
 
     protected V1 v1;

@@ -3,6 +3,7 @@ package com.nextcont.drive;
 import com.github.tobato.fastdfs.FdfsClientConfig;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.netflix.eureka.server.EnableEurekaServer;
 import org.springframework.context.annotation.Import;
 
 /**
@@ -14,6 +15,7 @@ import org.springframework.context.annotation.Import;
  */
 @Import(FdfsClientConfig.class)
 @SpringBootApplication
+@EnableEurekaServer
 public class Bootstrap{
 
     public static void main(String[] args) throws Exception {

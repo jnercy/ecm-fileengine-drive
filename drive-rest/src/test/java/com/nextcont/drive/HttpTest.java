@@ -1,19 +1,10 @@
 package com.nextcont.drive;
 
-import com.github.tobato.fastdfs.FdfsClientConfig;
 import com.nextcont.drive.utils.HttpClient;
 import com.nextcont.drive.utils.JsonFormat;
-import com.nextcont.file.request.transition.TransRequest;
-import lombok.extern.slf4j.Slf4j;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Import;
-import org.springframework.test.context.junit4.SpringRunner;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.CountDownLatch;
+import com.nextcont.drive.utils.Tuple;
+import com.nextcont.file.UserGroup;
+import org.apache.commons.codec.digest.DigestUtils;
 
 /**
  * Created with IntelliJ IDEA.
@@ -22,22 +13,17 @@ import java.util.concurrent.CountDownLatch;
  * Time: 14:43
  * To change this template use File | Settings | File Templates.
  */
-@Import(FdfsClientConfig.class)
-@RunWith(SpringRunner.class)
-@SpringBootTest
-@Slf4j
+
 public class HttpTest {
 
-    @Test
-    public void testhttp() throws InterruptedException {
-        String picUrl = "http://139.196.138.51/group1/M00/00/00/wKgBEFjPtRmAOEMpABcES0_vR-g112.gif";
-        String json = JsonFormat.toJson(TransRequest.getHttpRequest("dog.gif",picUrl,"7d4a3ef8-015f-431e-95c2-16b505bbb8da"));
-        HttpClient.httpPostRequest("http://139.196.136.113:8080/rest/trans/request",json);
-
-        CountDownLatch cdl = new CountDownLatch(1);
-
-        cdl.await();
-
+    public static void main(String[] args) {
+        long timestamp = System.currentTimeMillis()/1000;
+        System.out.println(timestamp);
+        String md5 = DigestUtils.md5Hex("yiguo.chen@nextcont.comnextcont"+timestamp+"nq4aK?[b#brC6(KC");
+        String picUrl = "https://nextcont-api.inecm.cn/v1/group?suffix=nextcont&email=yiguo.chen@nextcont.com&t="+timestamp+"&s="+md5;
+        Tuple<Integer,String> result = HttpClient.httpGetRequest(picUrl,null);
+        UserGroup ug = JsonFormat.convert2Object(result.v2(), UserGroup.class).get();
+        System.out.println();
     }
 
 

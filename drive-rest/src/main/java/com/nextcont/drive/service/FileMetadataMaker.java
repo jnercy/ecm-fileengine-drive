@@ -3,13 +3,11 @@ package com.nextcont.drive.service;
 import com.nextcont.drive.aspect.AuthAspect;
 import com.nextcont.drive.jooq.bean.TransitionUnAggregationData;
 import com.nextcont.drive.utils.BeanUtil;
+import com.nextcont.drive.utils.DateTimeUtil;
 import com.nextcont.file.*;
 import com.nextcont.file.folder.FolderCapability;
 import org.bson.Document;
-import org.joda.time.DateTime;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -34,34 +32,28 @@ public class FileMetadataMaker {
 
         TokenInfo tokenInfo = AuthAspect.getAuthTokenInfo();
 
-        nowTime = new DateTime().toString("yyyy-MM-dd");
+        nowTime = DateTimeUtil.nowTime2String();
 
         List<DriveUser> owners = buildOwner(data,tokenInfo);
 
         List<FilePermission> permissions = buildFilePermission(data,tokenInfo);
 
+        List<UserRecord> userRecords = buildUserRecord(data,tokenInfo);
+
         Capability capability = buildCapability(data.getMimeType());
 
-        FileMetaData.FileMetaDataBuilder builder = FileMetaData.builder();
-        FileMetaData fileAgg = builder
+        FileMetaData.FileMetaDataBuilder builder = FileMetaData.builder()
                 .id(data.getFileId())
                 .name(data.getFileName())
-                .spaces(Arrays.asList("drive"))
+                .spaces(Collections.singletonList("drive"))
                 .description(data.getMimeType())
                 .mimeType(data.getMimeType())
                 .starred(false)
                 .trashed(false)
                 .explicitlyTrashed(false)
-                .parents(Arrays.asList(AuthAspect.getAuthTokenInfo().getRootid()))
                 .version(INITIALVERSION)
-                .webViewLink(data.getWebContentLink())
-                .hasThumbnail(true)
-                .thumbnailVersion(INITIALVERSION)
-                .viewedByMeTime(nowTime)
-                .createdTime(new DateTime(data.getCreateTime()).toString("yyyy-MM-dd"))
+                .createdTime(nowTime)
                 .modifiedTime(nowTime)
-                .modifiedByMeTime(nowTime)
-                .modifiedByMe(true)
                 .owners(owners)
                 .lastModifyUser(owners.get(0))
                 .shared(false)
@@ -69,63 +61,64 @@ public class FileMetadataMaker {
                 .viewersCanCopyContent(true)
                 .writersCanShare(true)
                 .permissions(permissions)
+                .userRecords(userRecords)
                 .originalFilename(data.getFileName())
-                .fullFileExtension(data.getFullFileExtension())
-                .fileExtension(data.getFileExtension())
-                .md5Checksum("default")
-                .headRevisionId("default")
-                .ownedByMe(true)
-                .build();
+                .headRevisionId("")
+                .iconLink("https://cdn10.inecm.cn/iconLink/vnd.google-apps.folder+48.png")
+                .isFolder(1);
 
-        Document resultDocument = BeanUtil.toBson(fileAgg);
-
-        if(!resultDocument.isEmpty() && data.getMimeType().equals(FOLDER_MIMETYPE)){
-            resultDocument.remove("webContentLink");
-            resultDocument.remove("webContentLink");
-            resultDocument.remove("fullFileExtension");
-            resultDocument.remove("fileExtension");
-            resultDocument.remove("md5Checksum");
-            resultDocument.remove("size");
-            if(!fileAgg.isHasThumbnail())
-                resultDocument.remove("thumbnailLink");
+        if(!data.getMimeType().equals(FOLDER_MIMETYPE)){
+            builder.fullFileExtension(data.getFullFileExtension())
+                    .fileExtension(data.getFileExtension())
+                    .md5Checksum("")
+                    .hasThumbnail(true)
+                    .thumbnailVersion(INITIALVERSION)
+                    .webViewLink(data.getWebContentLink())
+                    .iconLink("https://cdn10.inecm.cn/iconLink/plain.png")
+                    .isFolder(0);
         }
-        return resultDocument;
+
+
+        return BeanUtil.toBson(builder.build());
     }
 
     private static Capability buildCapability(String mimeType) {
-        if (mimeType.equals(FOLDER_MIMETYPE))
-            return FolderCapability.getInstance();
-        else
-            return Capability.getInstance();
+        return mimeType.equals(FOLDER_MIMETYPE) ? FolderCapability.getInstance() : Capability.getInstance();
     }
 
     private static List<DriveUser> buildOwner(TransitionUnAggregationData data,TokenInfo tokenInfo) {
-        DriveUser.DriveUserBuilder ownersBuilder = DriveUser.builder();
-        DriveUser owners = ownersBuilder
+        DriveUser owners = DriveUser.builder()
                 .displayName(tokenInfo.getGmail())
                 .photoLink(tokenInfo.getPhotoLink())
                 .permissionId(data.getPermissionGenId())
                 .emailAddress(tokenInfo.getGmail())
                 .build();
-        List<DriveUser> ownersArrayList = new ArrayList<>();
-        ownersArrayList.add(owners);
-
-        return ownersArrayList;
+        return Collections.singletonList(owners);
     }
 
     private static List<FilePermission> buildFilePermission(TransitionUnAggregationData data,TokenInfo tokenInfo) {
-
-        FilePermission.FilePermissionBuilder permissionBuilder = FilePermission.builder();
-        FilePermission permission = permissionBuilder
+        FilePermission permission = FilePermission.builder()
                 .id(String.valueOf(data.getPermissionGenId()))
                 .type("user")
-                .emailAdddress(tokenInfo.getGmail())
+                .emailAddress(tokenInfo.getGmail())
                 .role("owner")
                 .displayName(tokenInfo.getGmail())
                 .photoLink(tokenInfo.getPhotoLink())
                 .build();
-
         return Collections.singletonList(permission);
+    }
+
+    private static List<UserRecord> buildUserRecord(TransitionUnAggregationData data,TokenInfo tokenInfo) {
+        UserRecord record = UserRecord.builder()
+                .parents(Collections.singletonList(data.getParent()))
+                .rootId(tokenInfo.getRootid())
+                .viewedByMe(true)
+                .viewedByMeTime(nowTime)
+                .modifyByMe(true)
+                .modifyByMeTime(nowTime)
+                .ownedByMe(true)
+                .build();
+        return Collections.singletonList(record);
     }
 
 }

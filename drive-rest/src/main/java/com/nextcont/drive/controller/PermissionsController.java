@@ -1,16 +1,10 @@
 package com.nextcont.drive.controller;
 
-import com.mongodb.client.model.Filters;
-import com.nextcont.drive.aspect.AuthAspect;
 import com.nextcont.drive.mongo.MongoInnerDomQuery;
 import com.nextcont.drive.mongo.service.BaseMongoService;
-import com.nextcont.drive.utils.IdGenService;
-import com.nextcont.drive.utils.JsonFormat;
-import com.nextcont.drive.utils.Try;
-import com.nextcont.drive.utils.Tuple;
+import com.nextcont.drive.utils.*;
 import com.nextcont.file.*;
 import com.nextcont.file.request.permission.*;
-import jdk.nashorn.internal.parser.Token;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
@@ -21,14 +15,17 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Updates.combine;
 import static com.mongodb.client.model.Updates.inc;
 import static com.mongodb.client.model.Updates.set;
+import static com.nextcont.drive.mongo.MongoField.mongoCreatePermissionQuery;
+import static com.nextcont.drive.mongo.MongoField.mongoDefaultQuery;
+import static com.nextcont.drive.mongo.MongoField.mongoUnlockQuery;
 import static com.nextcont.drive.utils.ResponseMaker.getErrorResponse;
 import static com.nextcont.drive.utils.ResponseMaker.getSuccessResponse;
 import static com.nextcont.drive.utils.TupleFactories.pairs;
@@ -47,54 +44,34 @@ public class PermissionsController {
 
 
     @Autowired
-    private BaseMongoService<FileMetaData> fileMetaDataService;
-
-    @Autowired
-    private BaseMongoService<FilePermission> permissionService;
-
-    @Autowired
-    private BaseMongoService<DriveFile> driveFileService;
+    private BaseMongoService driveMongoService;
 
     @Autowired
     private IdGenService idGenService;
 
 
     @PostMapping(value = "/{fileId}/permissions", produces = "application/json")
-    public ResponseEntity<Object> create(@PathVariable("fileId") String fileId, PermissionCreateRequest request, @RequestBody PermissionCreateRequestbody bodyData){
-        TokenInfo tokenInfo = AuthAspect.getAuthTokenInfo();
+    public ResponseEntity<Object> createPermissions(@PathVariable("fileId") String fileId,@RequestBody PermissionCreateRequestbody bodyData){
 
-        Bson queryBson = Filters.or(
-                and(
-                        eq("owners.emailAddress",tokenInfo.getGmail()),
-                        eq("id",fileId),
-                        eq("locked",false)),
-                and(
-                        eq("permissions.emailAddress",tokenInfo.getGmail()),
-                        eq("permissions.role","writer"),
-                        eq("id",fileId),eq("locked",false))
-                );
+        Bson queryBson = mongoCreatePermissionQuery(fileId,bodyData.getEmailAddress());
 
-
-        Tuple<Object,HttpStatus> result  = fileMetaDataService
+        Tuple<Object,HttpStatus> result  = driveMongoService
                 .queryOneFullField(queryBson)
                 .map(driveFile -> {
                             Try<String> proccessTry = Try.tried(driveFile, file -> {
+                                FileMetaData metaData = BeanUtil.toBean(driveFile,FileMetaData.class);
+
                                 BsonArray permissionArray = new BsonArray();
-                                List<FilePermission> permissions = file.getPermissions();
-                                FilePermission permission = FilePermission.builder()
-                                        .id(String.valueOf(idGenService.nextId()))
-                                        .type("user")
-                                        .emailAdddress(bodyData.getEmailAddress())
-                                        .photoLink("noraml.jpg")
-                                        .displayName(bodyData.getEmailAddress())
-                                        .role(bodyData.getRole())
-                                        .build();
+                                List<FilePermission> permissions = metaData.getPermissions();
+                                FilePermission permission = FilePermission.buildFilePermission(idGenService.nextId(),bodyData.getRole(),bodyData.getEmailAddress(),bodyData.getType());
                                 permissions.add(permission);
                                 permissions.forEach(p -> permissionArray.add(BsonDocument.parse(JsonFormat.toJson(p))));
+                                Bson combineUpdate = combine(
+                                        set("permissions", permissionArray),
+                                        set("shared", true),
+                                        inc("version", 1));
 
-                                Bson combineUpdate = combine(set("permissions", permissionArray),inc("version", 1));
-
-                                boolean updateResult = driveFileService.updateOne(new Document("id", fileId), combineUpdate);
+                                boolean updateResult = driveMongoService.updateMany(mongoDefaultQuery(fileId), combineUpdate);
                                 log.info("share update status:{}", updateResult ? "success" : "failed");
                                 return "sharing success";
                             });
@@ -107,17 +84,18 @@ public class PermissionsController {
 
 
     @DeleteMapping(value = "/{fileId}/permissions/{permissionId}", produces = "application/json")
-    public ResponseEntity<Object> delete(@PathVariable("fileId") String fileId,@PathVariable String permissionId, @RequestParam boolean supportsTeamDrives){
+    public ResponseEntity<Object> delete(@PathVariable("fileId") String fileId,@PathVariable String permissionId){
 
-        Tuple<Object,HttpStatus> result = fileMetaDataService
-                .queryOneFullField(new Document("owners.emailAddress", "jnercywang@gmail.com").append("id",fileId).append("locked", false))
+        Tuple<Object,HttpStatus> result = driveMongoService
+                .queryOneFullField(mongoUnlockQuery(fileId))
                 .map(driveFile -> {
-                            List<FilePermission> permissions = driveFile.getPermissions();
-                            boolean hasPermissionId = permissions.removeIf(p-> Objects.equals(p.getId(), permissionId));
+                            FileMetaData metaData = BeanUtil.toBean(driveFile,FileMetaData.class);
+                            List<FilePermission> permissions = metaData.getPermissions();
+                            boolean hasPermissionId = permissions.removeIf(p->p.getId().equals(permissionId));
                             if(hasPermissionId){
                                 BsonArray permissionArray = new BsonArray();
                                 permissions.forEach(p -> permissionArray.add(BsonDocument.parse(JsonFormat.toJson(p))));
-                                boolean deleteResult = driveFileService.updateOne(new Document("id",fileId),set("permissions", permissionArray));
+                                boolean deleteResult = driveMongoService.updateOne(new Document("id",fileId),set("permissions", permissionArray));
                                 return deleteResult ? pairs(getSuccessResponse("delete execute success!"),HttpStatus.OK) : pairs(getErrorResponse("delete execute failed!"),HttpStatus.BAD_REQUEST);
                             }else
                                 return pairs(getErrorResponse("permission Not found"),HttpStatus.BAD_REQUEST);
@@ -128,41 +106,43 @@ public class PermissionsController {
     }
 
     @GetMapping(value = "/{fileId}/permissions/{permissionId}", produces = "application/json")
-    public ResponseEntity<Object> get(@PathVariable("fileId") String fileId,@PathVariable String permissionId, @RequestParam boolean supportsTeamDrives){
+    public ResponseEntity<Object> get(@PathVariable("fileId") String fileId,@PathVariable String permissionId){
         MongoInnerDomQuery.MongoInnerDomQueryBuilder builder = MongoInnerDomQuery.builder();
         MongoInnerDomQuery query = builder
                 .parentQuery(eq("id",fileId))
                 .innerDomQuery(eq("permissions.id", permissionId))
                 .innerFieldName("permissions")
                 .build();
-        FilePermission permissions = permissionService
+        Document permissions = driveMongoService
                 .queryInnerDocument(query)
                 .orElse(null);
         return new ResponseEntity<>(permissions,HttpStatus.OK);
     }
 
     @GetMapping(value = "/{fileId}/permissions",produces = "application/json")
-    public ResponseEntity<?> list(@PathVariable("fileId") String fileId, PermissionListRequest request){
-        List<FilePermission> permissions = fileMetaDataService
-                .queryOneFullField(new Document("id",fileId))
-                .map(FileMetaData::getPermissions).orElse(null);
+    public ResponseEntity<Object> list(@PathVariable("fileId") String fileId){
+        Object permissions = driveMongoService
+                .queryOneFullField(mongoDefaultQuery(fileId))
+                .map(document -> document.get("permissions"))
+                .orElse(null);
         return new ResponseEntity<>(permissions,HttpStatus.OK);
     }
 
 
-    @PatchMapping(value = "/{fileId}/permissions/{permissionId}", produces = "application/json")
-    public ResponseEntity<Object> update(@PathVariable("fileId") String fileId, @PathVariable String permissionId, PermissionUpdateRequest request, @RequestBody PermissionUpdateRequestbody bodyData){
-        Tuple<Object,HttpStatus> result = fileMetaDataService
-                .queryOneFullField(new Document("owners.emailAddress", "jnercywang@gmail.com").append("id",fileId).append("locked", false))
+    @PostMapping(value = "/{fileId}/permissions/{permissionId}", produces = "application/json")
+    public ResponseEntity<Object> update(@PathVariable("fileId") String fileId, @PathVariable String permissionId, @RequestBody PermissionUpdateRequestbody bodyData){
+        Tuple<Object,HttpStatus> result = driveMongoService
+                .queryOneFullField(mongoUnlockQuery(fileId))
                 .map(driveFile -> {
-                            List<FilePermission> permissions = driveFile.getPermissions();
+                    FileMetaData metaData = BeanUtil.toBean(driveFile,FileMetaData.class);
+                    List<FilePermission> permissions = metaData.getPermissions();
                             permissions.forEach(p->{
                                 if(p.getId().equals(permissionId))
                                     p.setRole(bodyData.getRole());
                             });
                             BsonArray permissionArray = new BsonArray();
                             permissions.forEach(p -> permissionArray.add(BsonDocument.parse(JsonFormat.toJson(p))));
-                            boolean updateResult = driveFileService.updateOne(new Document("id",fileId),set("permissions", permissionArray));
+                            boolean updateResult = driveMongoService.updateOne(mongoDefaultQuery(fileId),set("permissions", permissionArray));
                             return updateResult ? pairs(getSuccessResponse("update execute success!"),HttpStatus.OK) : pairs(getErrorResponse("update execute failed!"),HttpStatus.BAD_REQUEST);
                         }
                 ).orElse(pairs(getErrorResponse("file not found or check failed"),HttpStatus.BAD_REQUEST));

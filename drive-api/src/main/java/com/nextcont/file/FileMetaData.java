@@ -40,8 +40,6 @@ public class FileMetaData implements Serializable{
 
     private boolean explicitlyTrashed;
 
-    private List<String> parents;
-
     private Map properties;
 
     private Map appProperties;
@@ -62,6 +60,9 @@ public class FileMetaData implements Serializable{
 
     private Long thumbnailVersion;
 
+    //是否是文件夹
+    private Integer isFolder;
+
     //锁定状态
     private boolean locked = false;
 
@@ -71,25 +72,16 @@ public class FileMetaData implements Serializable{
     //解锁时间
     private String deblockingTime;
 
-    private boolean viewedByMe = false;
-
-    private String viewedByMeTime;
 
     private String createdTime;
 
     private String modifiedTime;
-
-    private String modifiedByMeTime;
-
-    private boolean modifiedByMe;
 
     private List<DriveUser> owners;
 
     private DriveUser lastModifyUser;
 
     private boolean shared;
-
-    private boolean ownedByMe;
 
     private Capability capabilities;
 
@@ -109,9 +101,9 @@ public class FileMetaData implements Serializable{
 
     private String md5Checksum;
 
-    private long size;
+    private Long size;
 
-    private long quotaBytesUsed;
+    private Long quotaBytesUsed;
 
     private String headRevisionId;
 
@@ -123,7 +115,7 @@ public class FileMetaData implements Serializable{
 
     private boolean isAppAuthorized;
 
-    private List<FileProcessRecord> userRecords;
+    private List<UserRecord> userRecords;
 
-    private List<FileRevision> revisions;
+    //private List<FileRevision> revisions;
 }

@@ -35,6 +35,8 @@ public class DriveFile implements Serializable{
 
     private List<String> parents;
 
+    private String rootId;
+
     private List<String> spaces;
 
     private long version;
@@ -50,6 +52,9 @@ public class DriveFile implements Serializable{
     private String thumbnailLink;
 
     private long thumbnailVersion;
+
+    //是否是文件夹
+    private Integer isFolder;
 
     //锁定状态
     private boolean locked = false;

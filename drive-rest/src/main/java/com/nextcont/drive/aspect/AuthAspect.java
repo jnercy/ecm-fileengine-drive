@@ -66,6 +66,11 @@ public class AuthAspect extends AbstractAspect{
         long beginTime = System.currentTimeMillis();
         if (oauthSwitch.equals("close")) {
             try {
+                RequestAttributes ra = RequestContextHolder.getRequestAttributes();
+                ServletRequestAttributes sra = (ServletRequestAttributes) ra;
+                HttpServletRequest request = sra.getRequest();
+                log.info("token test=>{}",request.getHeader("token"));
+
                 TokenInfo tokenInfo = new TokenInfo();
                 tokenInfo.setGmail("mengping.jin@nextcont.com");
                 tokenInfo.setPhotoLink("www.baidu.com");
